@@ -98,9 +98,11 @@
         node.querySelector(".card-date").textContent = formatDate(article.published_at || article.created_at);
         var titleEl = node.querySelector(".hero-card-title");
         if (article.section) {
-            var badge = document.createElement("a");
-            badge.className = "section-badge";
-            badge.href = "/?section=" + encodeURIComponent(article.section);
+            var badge = document.createElement("span");
+            badge.className = "section-badge section-badge-link";
+            badge.dataset.sectionSlug = article.section;
+            badge.setAttribute("role", "link");
+            badge.setAttribute("tabindex", "0");
             badge.textContent = sectionTitle(article.section);
             titleEl.before(badge);
         }
@@ -131,9 +133,11 @@
             formatDate(article.published_at || article.created_at);
         var cardTitle = node.querySelector(".card-title");
         if (article.section) {
-            var badge = document.createElement("a");
-            badge.className = "section-badge";
-            badge.href = "/?section=" + encodeURIComponent(article.section);
+            var badge = document.createElement("span");
+            badge.className = "section-badge section-badge-link";
+            badge.dataset.sectionSlug = article.section;
+            badge.setAttribute("role", "link");
+            badge.setAttribute("tabindex", "0");
             badge.textContent = sectionTitle(article.section);
             cardTitle.before(badge);
         }
@@ -290,6 +294,18 @@
                 }
                 els.error.hidden = true;
 
+                // Дедупликация по slug: если статья уже показана (например,
+                // published_at изменился между запросами и она попала на две
+                // страницы), не рендерим её повторно.
+                var seen = {};
+                state.items.forEach(function (a) { seen[a.slug] = true; });
+                if (state.hero) seen[state.hero.slug] = true;
+                batch = batch.filter(function (a) {
+                    if (seen[a.slug]) return false;
+                    seen[a.slug] = true;
+                    return true;
+                });
+
                 // first page: take the freshest as hero
                 if (state.page === 1) {
                     state.hero = batch[0];
@@ -343,6 +359,21 @@
         els.sortOrder.addEventListener("change", function () {
             state.sort = els.sortOrder.value;
             applyFilterAndSort();
+        });
+
+        // Делегирование клика/Enter по section-badge внутри карточек
+        // (badge не вложён в <a>, чтобы HTML оставался валидным).
+        var onBadgeActivate = function (e) {
+            var badge = e.target.closest(".section-badge-link");
+            if (!badge) return;
+            var slug = badge.dataset.sectionSlug;
+            if (!slug) return;
+            window.location.href = "/?section=" + encodeURIComponent(slug);
+        };
+        document.addEventListener("click", onBadgeActivate);
+        document.addEventListener("keydown", function (e) {
+            if (e.key !== "Enter" && e.key !== " ") return;
+            onBadgeActivate(e);
         });
     }
 

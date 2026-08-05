@@ -63,6 +63,21 @@
         });
     }
 
+    // Санитизация HTML через DOMPurify: запрещаем скрипты, on*-атрибуты,
+    // style и опасные URI (javascript:, vbscript:, data: блокируются
+    // DOMPurify по умолчанию). Если DOMPurify недоступен — возвращаем пустую
+    // строку, чтобы не вставлять потенциально опасный HTML.
+    function sanitizeHtml(html) {
+        if (typeof window.DOMPurify !== "undefined") {
+            return window.DOMPurify.sanitize(html, {
+                USE_PROFILES: { html: true },
+                FORBID_ATTR: ["style"],
+                FORBID_TAGS: ["script", "iframe", "object", "embed", "form"],
+            });
+        }
+        return "";
+    }
+
     function placeholderAvatar(name) {
         var letter = (name || "?").trim().charAt(0).toUpperCase() || "?";
         var span = document.createElement("span");
@@ -71,34 +86,39 @@
         return span;
     }
 
-    /* ---------- body & footnotes ---------- */
+    /* ---------- тело статьи и сноски ---------- */
 
     /**
-     * Render the markdown body and convert footnote markers.
+     * Рендерит markdown-тело и преобразует маркеры сносок/картинок.
      *
-     * In the admin form, the body is Markdown and `*` denotes a footnote
-     * (1st `*` -> footnote #1, etc.). Footnotes are also provided as a
-     * separate ordered list (article.footnotes) with {number, text}.
+     * В админке тело — это Markdown, а `*` обозначает сноску
+     * (1-я `*` -> сноска №1 и т.д.). Сноски также приходят отдельным
+     * упорядоченным списком (article.footnotes) с {number, text}.
      *
-     * Inline images: markers `![n]` in the text reference article.images
-     * by their `position` (1-based). We replace them with <figure> blocks.
+     * Картинки в тексте: маркеры `![n]` ссылаются на article.images
+     * по `position` (с 1). Мы заменяем их на блоки <figure>.
      *
-     * Strategy:
-     *  - Before markdown parsing, replace `![n]` with a placeholder token
-     *    on its own line so marked wraps it in a <p>; we then swap those
-     *    <p> nodes for real <figure> elements after parsing.
-     *  - After parsing, replace standalone "*" characters (outside code)
-     *    with superscript footnote-reference links, in order of appearance.
+     * Стратегия:
+     *  - До markdown-парсинга заменяем `![n]` плейсхолдером на отдельной
+     *    строке, чтобы marked обернул его в <p>; затем меняем эти <p>
+     *    на настоящие элементы <figure> после парсинга.
+     *  - После парсинга заменяем одиночные символы "*" (вне code) на
+     *    надстрочные ссылки-сноски в порядке появления.
      */
     function renderBody(article) {
         var raw = article.body || "";
+        // Если тело пустое — показываем плейсхолдер
+        if (!raw.trim()) {
+            els.body.innerHTML = "<p>Содержимое статьи отсутствует.</p>";
+            return {};
+        }
         var images = (article.images || []).slice();
         var imgByPos = {};
         images.forEach(function (im) { imgByPos[im.position] = im; });
 
-        // 1) Replace ![n] markers with placeholder tokens BEFORE markdown,
-        //    so marked doesn't turn them into broken <img> tags.
-        //    Token format: @@IMG-n@@ on its own paragraph.
+        // 1) Заменяем маркеры ![n] плейсхолдерами ДО markdown-парсинга,
+        //    чтобы marked не превратил их в битые <img>.
+        //    Формат токена: @@IMG-n@@ отдельным абзацем.
         raw = raw.replace(/!\[(\d+)\]/g, function (m, n) {
             return "\n\n@@IMG-" + n + "@@\n\n";
         });
@@ -113,7 +133,9 @@
         } else {
             html = "<p>" + escapeHtml(raw).replace(/\n/g, "<br>") + "</p>";
         }
-        els.body.innerHTML = html;
+        // Санитизируем вывод markdown для защиты от XSS (скрипты, on*-атрибуты,
+        // javascript:-URL и т.п. запрещены конфигурацией DOMPurify).
+        els.body.innerHTML = sanitizeHtml(html);
 
         // 2) Swap placeholder <p>@@IMG-n@@</p> for real <figure> elements.
         var usedPositions = {};
@@ -182,7 +204,7 @@
             tn.parentNode.replaceChild(frag, tn);
         });
 
-        // Render footnotes list from the article's footnote records.
+        // Рендерим список сносок из записей article.footnotes.
         if (footnotes.length) {
             els.footnotes.hidden = false;
             els.fnList.innerHTML = "";
@@ -207,14 +229,14 @@
         return usedPositions;
     }
 
-    // Footnote text may contain simple markdown; render with marked too.
+    // Текст сноски может содержать простой markdown — рендерим через marked
+    // и обязательно санитизируем (защита от XSS).
     function renderInline(text) {
         if (!text) return "";
         if (window.marked) {
             try {
-                // marked returns block HTML; for inline use, strip wrapping <p>
                 var out = window.marked.parseInline(text);
-                return out;
+                return sanitizeHtml(out);
             } catch (e) { /* fall through */ }
         }
         return escapeHtml(text);
@@ -259,6 +281,19 @@
 
     function render(article) {
         document.title = article.title + " — БОГЕМА";
+
+        // Динамически обновляем мета-теги для SEO/шеринга
+        var setMeta = function (selector, attr, value) {
+            var el = document.querySelector(selector);
+            if (el) el.setAttribute(attr, value);
+        };
+        var description = article.subtitle || article.title;
+        setMeta('meta[name="description"]', "content", description);
+        setMeta('#og-title', "content", article.title + " — БОГЕМА");
+        setMeta('#og-description', "content", description);
+        if (article.cover_image_url) {
+            setMeta('meta[property="og:image"]', "content", article.cover_image_url);
+        }
 
         // Section badge (resolved to a title via sectionMap).
         if (article.section && els.section) {
@@ -358,25 +393,21 @@
             return;
         }
 
-        // Load sections (for nav + section-title resolution), then the article.
-        // Sequential to avoid races filling sectionMap.
-        renderSectionNav();
-        MediaAPI.getArticle(slug)
+        // Загружаем разделы (для навигации + разрешения slug->title), затем
+        // статью. renderSectionNav заполняет sectionMap; статья рендерится
+        // после этого, чтобы бейдж раздела получил человекочитаемый заголовок.
+        renderSectionNav()
+            .catch(function () {}) // навигация не критична — продолжаем
+            .then(function () {
+                return MediaAPI.getArticle(slug);
+            })
             .then(function (article) {
                 if (!article) { showError("Статья не найдена."); return; }
-                // ensure sectionMap is ready before rendering the badge
-                var ready = Object.keys(sectionMap).length > 0
-                    ? Promise.resolve()
-                    : MediaAPI.listSections().then(function (sections) {
-                          sections.forEach(function (s) { sectionMap[s.slug] = s.title; });
-                      }).catch(function () {});
-                return ready.then(function () {
-                    try {
-                        render(article);
-                    } catch (e) {
-                        showError("Ошибка отрисовки: " + (e && e.message ? e.message : e));
-                    }
-                });
+                try {
+                    render(article);
+                } catch (e) {
+                    showError("Ошибка отрисовки: " + (e && e.message ? e.message : e));
+                }
             })
             .catch(function (e) { showError("Ошибка загрузки: " + (e && e.message ? e.message : e)); });
     });

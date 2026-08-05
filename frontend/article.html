@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Статья — БОГЕМА</title>
+    <meta name="description" content="Статья журнала БОГЕМА.">
+    <!-- Open Graph / соцсети (обновляются динамически в article.js) -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="БОГЕМА">
+    <meta property="og:title" id="og-title" content="Статья — БОГЕМА">
+    <meta property="og:description" id="og-description" content="Статья журнала БОГЕМА.">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap">
@@ -32,8 +39,8 @@
             <div class="header-tools">
                 <button id="theme-toggle" class="icon-btn" type="button"
                         aria-label="Переключить тему" title="Переключить тему">
-                    <span class="theme-icon" data-icon="sun">☀</span>
-                    <span class="theme-icon" data-icon="moon">☾</span>
+                    <span class="theme-icon" data-icon="sun" aria-hidden="true">☀</span>
+                    <span class="theme-icon" data-icon="moon" aria-hidden="true">☾</span>
                 </button>
             </div>
         </div>
@@ -51,7 +58,7 @@
                 <div class="skeleton skeleton-line short"></div>
             </div>
 
-            <div id="article-error" class="feed-error" hidden>
+            <div id="article-error" class="feed-error" role="alert" hidden>
                 <p>Статья не найдена или ещё не опубликована.</p>
                 <p><a href="/" class="btn-outline">Вернуться на главную</a></p>
             </div>
@@ -98,10 +105,11 @@
         </div>
     </footer>
 
-    <!-- Markdown renderer (CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
-    <script src="/assets/js/theme.js?v=4"></script>
-    <script src="/assets/js/api.js?v=4"></script>
-    <script src="/assets/js/article.js?v=4"></script>
+    <!-- Markdown-рендеринг и санитизация (самохостинг, без CDN) -->
+    <script src="/assets/vendor/marked.min.js?v=5"></script>
+    <script src="/assets/vendor/purify.min.js?v=5"></script>
+    <script src="/assets/js/theme.js?v=5"></script>
+    <script src="/assets/js/api.js?v=5"></script>
+    <script src="/assets/js/article.js?v=5"></script>
 </body>
 </html>

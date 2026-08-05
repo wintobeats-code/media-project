@@ -1,0 +1,109 @@
+# CI для БОГЕМА CMS: проверка backend (Python) и frontend (JS/CSS/HTML).
+# Запускается на каждый push и pull request в основные ветки.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  backend:
+    name: Backend (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Compile all Python files (синтаксис)
+        run: |
+          python -m compileall -q app
+          echo "Все Python-файлы компилируются без ошибок синтаксиса."
+
+      - name: Lint (ruff)
+        run: ruff check app || true
+
+      - name: Импорт моделей и приложения
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          SECRET_KEY: "ci-test-secret-not-for-production"
+        run: |
+          # aiosqlite нужен для проверки импорта с SQLite in-memory
+          pip install aiosqlite
+          python -c "from app.main import app; print('FastAPI app импортирован:', app.title)"
+          python -c "from app.models import Article, Author, Tag, Footnote, ArticleImage; print('Все модели импортируются')"
+
+  frontend:
+    name: Frontend (HTML/CSS/JS)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Проверка синтаксиса JS
+        run: |
+          set -e
+          for f in frontend/assets/js/*.js frontend/assets/vendor/*.js; do
+            node --check "$f"
+            echo "OK: $f"
+          done
+
+      - name: Проверка наличия ключевых файлов
+        run: |
+          test -f frontend/index.html || { echo "index.html отсутствует"; exit 1; }
+          test -f frontend/article.html || { echo "article.html отсутствует"; exit 1; }
+          test -f frontend/assets/css/styles.css || { echo "styles.css отсутствует"; exit 1; }
+          test -f frontend/assets/vendor/marked.min.js || { echo "marked.min.js отсутствует"; exit 1; }
+          test -f frontend/assets/vendor/purify.min.js || { echo "purify.min.js отсутствует"; exit 1; }
+          echo "Все ключевые файлы фронтенда на месте."
+
+      - name: Поиск вложенных ссылок (невалидный HTML)
+        run: |
+          # Грубая проверка: в шаблонах не должно быть <a> внутри <a>
+          # (ignore ошибки grep — это лишь эвристика)
+          if grep -rzoP '<a[^>]*>.*<a[^>]*>' frontend/*.html 2>/dev/null; then
+            echo "Внимание: возможны вложенные <a> в HTML — проверьте."
+          else
+            echo "Вложенных <a> не обнаружено."
+          fi
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Сборка production-образа
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: bogema:ci
