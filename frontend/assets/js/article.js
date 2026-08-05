@@ -19,6 +19,8 @@
         els.coverImg = document.getElementById("cover-img");
         els.body = document.getElementById("article-body");
         els.tags = document.getElementById("article-tags");
+        els.likeBtn = document.getElementById("like-btn");
+        els.likeCount = document.getElementById("like-count");
         els.gallery = document.getElementById("article-images");
         els.footnotes = document.getElementById("article-footnotes");
         els.fnList = document.getElementById("footnotes-list");
@@ -336,9 +338,60 @@
         var usedPositions = renderBody(article);
         renderGallery(article.images, usedPositions);
         renderTags(article.tags);
+        renderLike(article);
 
         els.loading.hidden = true;
         els.content.hidden = false;
+    }
+
+    // Ключ localStorage для хранения лайкнутых статей: { slug: true, ... }
+    var LIKES_KEY = "media-likes";
+
+    function getLikedSlugs() {
+        try { return JSON.parse(localStorage.getItem(LIKES_KEY) || "{}"); }
+        catch (e) { return {}; }
+    }
+    function setLiked(slug, liked) {
+        try {
+            var data = getLikedSlugs();
+            if (liked) data[slug] = true; else delete data[slug];
+            localStorage.setItem(LIKES_KEY, JSON.stringify(data));
+        } catch (e) {}
+    }
+
+    // Текущий slug статьи — нужен обработчику клика.
+    var currentSlug = "";
+
+    function renderLike(article) {
+        if (!els.likeBtn) return;
+        currentSlug = article.slug || "";
+        var count = article.likes_count || 0;
+        if (els.likeCount) els.likeCount.textContent = String(count);
+        // Активное состояние — по факту из localStorage (сервер — источник правды,
+        // но localStorage даёт мгновенный отклик UI без запроса).
+        var liked = !!getLikedSlugs()[currentSlug];
+        els.likeBtn.classList.toggle("liked", liked);
+        els.likeBtn.hidden = false;
+        if (!els.likeBtn.dataset.bound) {
+            els.likeBtn.dataset.bound = "1";
+            els.likeBtn.addEventListener("click", onLikeClick);
+        }
+    }
+
+    function onLikeClick() {
+        if (!currentSlug) return;
+        var btn = els.likeBtn;
+        if (btn.disabled) return;
+        btn.disabled = true;
+        MediaAPI.likeArticle(currentSlug)
+            .then(function (res) {
+                if (els.likeCount) els.likeCount.textContent = String(res.likes_count || 0);
+                var liked = !!res.liked;
+                btn.classList.toggle("liked", liked);
+                setLiked(currentSlug, liked);
+            })
+            .catch(function () { /* молча — можно показать toast */ })
+            .then(function () { btn.disabled = false; });
     }
 
     function renderTags(tags) {

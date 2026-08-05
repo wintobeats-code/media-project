@@ -115,6 +115,7 @@ class ArticleRead(BaseModel):
     footnotes: List[FootnoteRead] = []
     images: List[ArticleImageRead] = []
     tags: List[TagRead] = []
+    likes_count: int = 0
     created_at: datetime
     updated_at: datetime
 
@@ -131,6 +132,7 @@ class ArticleListItem(BaseModel):
     status: str
     section: Optional[str] = None
     tag_slugs: List[str] = []
+    likes_count: int = 0
     published_at: Optional[datetime] = None
     cover_image_url: Optional[str] = None
     created_at: datetime

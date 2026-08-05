@@ -1,20 +1,26 @@
 from __future__ import annotations
 
+import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Response
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.sections import SECTIONS
 from app.models.article import Article
+from app.models.article_like import ArticleLike
 from app.models.tag import Tag
 from app.schemas.article import ArticleListItem, ArticleRead
 from app.schemas.meta import SectionCount, TagCount
 from app.services.article import ArticleService
 
 router = APIRouter(prefix="/api/articles", tags=["articles"])
+
+VOTER_COOKIE = "voter_id"
+VOTER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 год
 
 
 def _to_list_item(a: Article) -> ArticleListItem:
@@ -28,6 +34,7 @@ def _to_list_item(a: Article) -> ArticleListItem:
         status=a.status,
         section=a.section,
         tag_slugs=[t.slug for t in (a.tags or [])],
+        likes_count=getattr(a, "likes_count", 0) or 0,
         published_at=a.published_at,
         cover_image_url=a.cover_image_url,
         created_at=a.created_at,
@@ -56,6 +63,63 @@ async def get_article(slug: str, db: AsyncSession = Depends(get_db)):
     if article is None:
         raise HTTPException(status_code=404, detail="Article not found")
     return article
+
+
+@router.post("/{slug}/like")
+async def like_article(
+    slug: str,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    voter_id: str | None = Cookie(default=None, alias=VOTER_COOKIE),
+):
+    """Ставит лайк статье от анонимного пользователя (без аккаунтов).
+
+    Защита от накруток: один лайк на статью на один voter_id (кука браузера).
+    Повторный лайк — noop, возвращает текущее состояние.
+    """
+    service = ArticleService(db)
+    article = await service.get_by_slug(slug)
+    if article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Генерируем voter_id, если куки нет, и выставляем её в ответе
+    new_voter = False
+    if not voter_id:
+        voter_id = uuid.uuid4().hex
+        response.set_cookie(
+            key=VOTER_COOKIE,
+            value=voter_id,
+            max_age=VOTER_COOKIE_MAX_AGE,
+            samesite="lax",
+            httponly=False,  # не критично; кука нужна только серверу
+        )
+        new_voter = True
+
+    # Проверяем, ставил ли уже этот voter_id лайк
+    existing = await db.execute(
+        select(ArticleLike).where(
+            ArticleLike.article_id == article.id,
+            ArticleLike.voter_id == voter_id,
+        )
+    )
+    already_liked = existing.scalars().first() is not None
+
+    if not already_liked:
+        try:
+            db.add(ArticleLike(article_id=article.id, voter_id=voter_id))
+            await db.commit()
+        except IntegrityError:
+            # Гонка: лайк уже создан параллельным запросом — считаем уже поставленным
+            await db.rollback()
+        # Пересчитываем количество лайков
+        await db.refresh(article)
+
+    likes_count = getattr(article, "likes_count", 0) or 0
+    return {
+        "likes_count": likes_count,
+        "liked": True,
+        "new_voter": new_voter,
+    }
 
 
 # --- Meta endpoints (sections + tags) ---

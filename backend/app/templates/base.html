@@ -6,16 +6,29 @@
     <title>{% block title %}Админ-панель{% endblock %} — БОГЕМА</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <style>
-        :root { --pico-font-size: 15px; }
+        /* Чёрно-белая гамма под стать сайтом (переопределяем Pico CSS) */
+        :root {
+            --pico-primary: #111111;
+            --pico-primary-hover: #000000;
+            --pico-primary-background: #111111;
+            --pico-primary-inverse: #ffffff;
+            --pico-background-color: #ffffff;
+            --pico-color: #1a1a1a;
+            --pico-muted-color: #6b6b6b;
+            --pico-form-element-background-color: #ffffff;
+            --pico-form-element-border-color: #d2d2d6;
+            --pico-form-element-active-border-color: #111111;
+            --pico-font-size: 15px;
+        }
         .container { max-width: 960px; }
-        .nav-brand { font-weight: 700; font-size: 1.2rem; text-decoration: none; color: var(--pico-primary); }
-        .status-draft { color: #e67e22; }
-        .status-published { color: #27ae60; }
+        .nav-brand { font-weight: 700; font-size: 1.2rem; text-decoration: none; color: var(--pico-primary); letter-spacing: 0.02em; }
+        .status-draft { color: #8a8a90; }
+        .status-published { color: #111111; font-weight: 600; }
         .actions { display: flex; gap: 0.5rem; }
         .footnote-item { display: flex; gap: 0.5rem; align-items: start; margin-bottom: 0.5rem; }
         .footnote-item input { flex: 1; }
         .footnote-item button { flex-shrink: 0; }
-        .image-item { border: 1px solid var(--pico-muted-border-color); padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; }
+        .image-item { border: 1px solid var(--pico-form-element-border-color); padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; }
         .image-item-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
         .image-item-row input[name="image_url"] { flex: 1; margin: 0; }
         .image-index { font-family: monospace; font-weight: 700; color: var(--pico-primary); white-space: nowrap; min-width: 3rem; }
@@ -24,13 +37,16 @@
         .image-preview { max-height: 80px; border-radius: 4px; }
         .stat-card { text-align: center; padding: 2rem; }
         .stat-card h2 { margin-bottom: 0; }
-        .stat-card p { color: #666; }
+        .stat-card p { color: #6b6b6b; }
+        /* Текстовые кнопки действий вместо эмодзи */
+        .btn-act { padding: 0.3rem 0.55rem; font-size: 0.8rem; line-height: 1; }
+        .btn-remove { color: #111; font-weight: 600; }
     </style>
 </head>
 <body>
     <nav class="container">
         <ul>
-            <li><a href="/admin" class="nav-brand">📰 БОГЕМА</a></li>
+            <li><a href="/admin" class="nav-brand">БОГЕМА</a></li>
         </ul>
         {% if request.cookies.get('access_token') %}
         <ul>
@@ -71,14 +87,14 @@
             div.innerHTML = `
                 <input type="hidden" name="footnote_number" value="${footnoteCounter}">
                 <input type="text" name="footnote_text" placeholder="Текст сноски ${footnoteCounter} *" required>
-                <button type="button" class="outline secondary" onclick="this.parentElement.remove()">✕</button>
+                <button type="button" class="outline secondary btn-act btn-remove" onclick="this.parentElement.remove()" title="Удалить">×</button>
             `;
             container.appendChild(div);
         }
 
-        // --- Article inline images ---
-        // Positions are 1-based and assigned by DOM order in #images-container,
-        // so removing a row renumbers the rest. We refresh labels on every change.
+        // --- Изображения в тексте статьи ---
+        // Позиции нумеруются с 1 по порядку в #images-container, поэтому удаление
+        // строки перенумеровывает остальные. Обновляем метки при каждом изменении.
         function refreshImageIndices() {
             const container = document.getElementById('images-container');
             if (!container) return;
@@ -102,7 +118,7 @@
                 <div class="image-item-row">
                     <span class="image-index">![1]</span>
                     <input type="text" name="image_url" placeholder="URL изображения" data-role="url" required>
-                    <button type="button" class="outline secondary" onclick="this.closest('.image-item').remove(); refreshImageIndices();">✕</button>
+                    <button type="button" class="outline secondary btn-act btn-remove" onclick="this.closest('.image-item').remove(); refreshImageIndices();" title="Удалить">×</button>
                 </div>
                 <input type="text" name="image_caption" placeholder="Подпись (необязательно)">
                 <div class="image-upload-row">
@@ -114,7 +130,7 @@
             refreshImageIndices();
         }
 
-        // Upload a file and fill the url field + preview within the same .image-item.
+        // Загружает файл и подставляет URL + превью в ту же .image-item.
         async function uploadImageToItem(input) {
             const file = input.files[0];
             if (!file) return;
@@ -172,7 +188,7 @@
                     footnotes.push({ number: parseInt(numberInput.value), text: textInput.value.trim() });
                 }
             });
-            // Inline images: refresh positions by DOM order, then collect.
+            // Картинки в тексте: обновляем позиции по порядку DOM, затем собираем.
             refreshImageIndices();
             const images = [];
             document.querySelectorAll('#images-container .image-item').forEach((item, idx) => {

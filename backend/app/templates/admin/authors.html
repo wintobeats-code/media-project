@@ -27,9 +27,9 @@
             <td><code>{{ author.slug }}</code></td>
             <td>{{ author.articles|length }}</td>
             <td class="actions">
-                <a href="/admin/authors/{{ author.id }}/edit" role="button" class="outline secondary" style="padding:0.3rem 0.6rem;">✏️</a>
+                <a href="/admin/authors/{{ author.id }}/edit" role="button" class="outline secondary btn-act" title="Изменить">Изм.</a>
                 <form action="/admin/authors/{{ author.id }}/delete" method="post" onsubmit="return confirmDelete('Удалить автора «{{ author.name }}»? Все его статьи будут также удалены.')">
-                    <button type="submit" class="outline secondary" style="padding:0.3rem 0.6rem; color:#e74c3c;">🗑️</button>
+                    <button type="submit" class="outline secondary btn-act btn-remove" title="Удалить">Удл.</button>
                 </form>
             </td>
         </tr>

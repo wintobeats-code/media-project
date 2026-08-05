@@ -38,6 +38,21 @@
             });
     };
 
+    /**
+     * Поставить лайк статье. Возвращает {likes_count, liked}.
+     * @param {string} slug
+     * @returns {Promise<object>}
+     */
+    API.likeArticle = function (slug) {
+        return fetch("/api/articles/" + encodeURIComponent(slug) + "/like", {
+            method: "POST",
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            });
+    };
+
     /** Sections with published counts. */
     API.listSections = function () {
         return fetch("/api/sections")

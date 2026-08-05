@@ -556,6 +556,36 @@ button { font: inherit; cursor: pointer; }
 .tag-chip:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .tag-chip::before { content: "#"; opacity: 0.6; margin-right: 2px; }
 
+/* ---------- Кнопка лайка ---------- */
+.article-like { margin: 28px 0 0; }
+.like-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    color: var(--text-soft);
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.like-btn:hover { border-color: var(--text); color: var(--text); }
+.like-btn:active { transform: scale(0.96); }
+.like-icon { fill: none; stroke: currentColor; stroke-width: 1.7; transition: fill 0.15s ease, stroke 0.15s ease; }
+.like-count { font-variant-numeric: tabular-nums; line-height: 1; }
+
+/* Активное состояние (пользователь лайкнул) — залитое сердце */
+.like-btn.liked {
+    border-color: var(--text);
+    color: var(--text);
+}
+.like-btn.liked .like-icon { fill: currentColor; stroke: currentColor; }
+.like-btn.liked .like-count { color: var(--text); }
+
 /* ---------- Gallery (fallback for images without `![n]` markers) ---------- */
 .article-gallery { margin: 44px 0; display: grid; gap: 28px; }
 .gallery-item img { width: 100%; border-radius: var(--radius); }

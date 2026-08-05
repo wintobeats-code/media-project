@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import DateTime, ForeignKey, String, Text, func, select
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -52,3 +52,22 @@ class Article(Base):
         back_populates="articles",
         lazy="selectin",
     )
+    likes: Mapped[List["ArticleLike"]] = relationship(
+        back_populates="article",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+
+# column_property нужно определить после объявления класса, т.к. он ссылается
+# на таблицу article_likes. Импортируем модель здесь (реальный импорт, не
+# TYPE_CHECKING), чтобы свойство вычислилось во время выполнения.
+from app.models.article_like import ArticleLike  # noqa: E402
+
+# Количество лайков статьи — вычисляемый subquery, доступен везде как article.likes_count.
+Article.likes_count = column_property(
+    select(func.count(ArticleLike.id))
+    .where(ArticleLike.article_id == Article.id)
+    .correlate(Article)
+    .scalar_subquery()
+)

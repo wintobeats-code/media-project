@@ -6,7 +6,14 @@ from app.core.config import settings
 from app.core.database import Base
 
 # Импортируем все модели, чтобы Alembic их обнаружил
-from app.models import article, article_image, author, footnote, tag  # noqa: F401
+from app.models import (  # noqa: F401
+    article,
+    article_image,
+    article_like,
+    author,
+    footnote,
+    tag,
+)
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config

@@ -85,7 +85,7 @@
             <div class="footnote-item">
                 <input type="hidden" name="footnote_number" value="{{ fn.number }}">
                 <input type="text" name="footnote_text" value="{{ fn.text }}" placeholder="Текст сноски {{ fn.number }} *" required>
-                <button type="button" class="outline secondary" onclick="this.parentElement.remove()">✕</button>
+                <button type="button" class="outline secondary" onclick="this.parentElement.remove()" class="outline secondary btn-act btn-remove" title="Удалить">×</button>
             </div>
                 {% endfor %}
             {% endif %}
@@ -103,7 +103,7 @@
                 <div class="image-item-row">
                     <span class="image-index">![{{ img.position }}]</span>
                     <input type="text" name="image_url" value="{{ img.url }}" placeholder="URL изображения" data-role="url" required>
-                    <button type="button" class="outline secondary" onclick="this.closest('.image-item').remove()">✕</button>
+                    <button type="button" class="outline secondary btn-act btn-remove" onclick="this.closest('.image-item').remove()" title="Удалить">×</button>
                 </div>
                 <input type="text" name="image_caption" value="{{ img.caption or '' }}" placeholder="Подпись (необязательно)">
                 <div class="image-upload-row">

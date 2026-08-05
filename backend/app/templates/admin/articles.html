@@ -39,9 +39,9 @@
                 {% endif %}
             </td>
             <td class="actions">
-                <a href="/admin/articles/{{ article.id }}/edit" role="button" class="outline secondary" style="padding:0.3rem 0.6rem;">✏️</a>
+                <a href="/admin/articles/{{ article.id }}/edit" role="button" class="outline secondary btn-act" title="Изменить">Изм.</a>
                 <form action="/admin/articles/{{ article.id }}/delete" method="post" onsubmit="return confirmDelete('Удалить статью «{{ article.title }}»?')">
-                    <button type="submit" class="outline secondary" style="padding:0.3rem 0.6rem; color:#e74c3c;">🗑️</button>
+                    <button type="submit" class="outline secondary btn-act btn-remove" title="Удалить">Удл.</button>
                 </form>
             </td>
         </tr>
