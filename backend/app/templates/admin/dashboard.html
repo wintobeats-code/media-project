@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<h1>Дашборд</h1>
+
+<div class="grid">
+    <article class="stat-card">
+        <h2>{{ articles_count }}</h2>
+        <p>Статей</p>
+        <a href="/admin/articles" role="button" class="outline">Все статьи</a>
+    </article>
+    <article class="stat-card">
+        <h2>{{ authors_count }}</h2>
+        <p>Авторов</p>
+        <a href="/admin/authors" role="button" class="outline">Все авторы</a>
+    </article>
+</div>
+
+<div style="margin-top:2rem;">
+    <a href="/admin/articles/new" role="button">✏️ Новая статья</a>
+    <a href="/admin/authors/new" role="button" class="secondary">👤 Новый автор</a>
+</div>
+{% endblock %}

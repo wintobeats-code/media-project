@@ -1,0 +1,42 @@
+# Версии и окружение
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+.venv/
+venv/
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Файлы окружения (секреты не должны попасть в образ)
+.env
+backend/.env
+**/.env.local
+
+# Загруженные файлы (runtime-данные)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Git и IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+**/*.swp
+**/*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Документация и артефакты
+*.md
+!README.md
+docker-compose.yml
+LICENSE
+
+# Локальная БД
+*.db
+*.sqlite3
+
+# Node (если появится сборка фронта)
+node_modules/

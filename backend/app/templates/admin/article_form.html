@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Редактирование статьи" if is_edit else "Новая статья" }}{% endblock %}
+
+{% block content %}
+<h1>{{ "Редактирование статьи" if is_edit else "Новая статья" }}</h1>
+
+<form onsubmit="submitArticleForm(event, {{ 'true' if is_edit else 'false' }}, {{ article.id if article else 0 }})">
+    <div class="grid">
+        <label>
+            Заголовок *
+            <input type="text" name="title" value="{{ article.title if article else '' }}" required>
+        </label>
+        <label>
+            Slug *
+            <input type="text" name="slug" value="{{ article.slug if article else '' }}" required placeholder="moi-zagolovok">
+        </label>
+    </div>
+
+    <label>
+        Подзаголовок
+        <input type="text" name="subtitle" value="{{ article.subtitle if article and article.subtitle else '' }}">
+    </label>
+
+    <div class="grid">
+        <label>
+            Автор *
+            <select name="author_id" required>
+                <option value="">Выберите автора</option>
+                {% for a in authors %}
+                <option value="{{ a.id }}" {{ 'selected' if article and article.author_id == a.id else '' }}>
+                    {{ a.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Раздел
+            <select name="section">
+                <option value="">Без раздела</option>
+                {% for slug, title in sections %}
+                <option value="{{ slug }}" {{ 'selected' if article and article.section == slug else '' }}>
+                    {{ title }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Статус
+            <select name="status">
+                <option value="draft" {{ 'selected' if not article or article.status == 'draft' else '' }}>Черновик</option>
+                <option value="published" {{ 'selected' if article and article.status == 'published' else '' }}>Опубликована</option>
+            </select>
+        </label>
+    </div>
+
+    <label>
+        Теги (через запятую)
+        <input type="text" name="tags" id="article-tags"
+               value="{{ (article.tags | map(attribute='name') | join(', ')) if article and article.tags else '' }}"
+               placeholder="мода, показ, интервью">
+    </label>
+
+    <label>
+        Текст статьи (Markdown) * — используйте * для сносок
+        <textarea name="body" rows="15" required>{{ article.body if article else '' }}</textarea>
+    </label>
+
+    <label>
+        URL обложки
+        <div class="grid">
+            <input type="text" name="cover_image_url" id="cover_url" value="{{ article.cover_image_url if article and article.cover_image_url else '' }}">
+            <div>
+                <input type="file" accept="image/*" data-target="cover_url" data-preview="cover_preview" onchange="uploadImage(this)">
+                <img id="cover_preview" src="{{ article.cover_image_url if article and article.cover_image_url else '' }}" style="display: {{ 'block' if article and article.cover_image_url else 'none' }}; max-height:100px; margin-top:0.5rem;">
+            </div>
+        </div>
+    </label>
+
+    <details{% if article and article.footnotes %} open{% endif %}>
+        <summary><strong>Сноски</strong> (каждая * в тексте = сноска по порядку)</summary>
+        <div id="footnotes-container">
+            {% if article %}
+                {% for fn in article.footnotes %}
+            <div class="footnote-item">
+                <input type="hidden" name="footnote_number" value="{{ fn.number }}">
+                <input type="text" name="footnote_text" value="{{ fn.text }}" placeholder="Текст сноски {{ fn.number }} *" required>
+                <button type="button" class="outline secondary" onclick="this.parentElement.remove()">✕</button>
+            </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <button type="button" class="outline" onclick="addFootnote()">+ Добавить сноску</button>
+    </details>
+
+    <details{% if article and article.images %} open{% endif %}>
+        <summary><strong>Изображения в тексте</strong> (вставьте <code>![1]</code>, <code>![2]</code> … в текст — номер = порядку ниже)</summary>
+        <div id="images-container">
+            {% if article %}
+                {% for img in article.images %}
+            <div class="image-item">
+                <input type="hidden" name="image_position" value="{{ img.position }}">
+                <div class="image-item-row">
+                    <span class="image-index">![{{ img.position }}]</span>
+                    <input type="text" name="image_url" value="{{ img.url }}" placeholder="URL изображения" data-role="url" required>
+                    <button type="button" class="outline secondary" onclick="this.closest('.image-item').remove()">✕</button>
+                </div>
+                <input type="text" name="image_caption" value="{{ img.caption or '' }}" placeholder="Подпись (необязательно)">
+                <div class="image-upload-row">
+                    <input type="file" accept="image/*" data-target-prev-sibling="url" onchange="uploadImageToItem(this)">
+                    <img class="image-preview" src="{{ img.url or '' }}" alt="" style="{{ '' if img.url else 'display:none;' }}">
+                </div>
+            </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <button type="button" class="outline" onclick="addArticleImage()">+ Добавить изображение</button>
+    </details>
+
+    <div style="margin-top:1rem; display:flex; gap:1rem;">
+        <button type="submit">{{ "Сохранить" if is_edit else "Создать" }}</button>
+        <a href="/admin/articles" role="button" class="secondary outline">Отмена</a>
+    </div>
+</form>
+
+<script>
+    // Initialize footnote counter based on existing footnotes
+    document.addEventListener('DOMContentLoaded', () => {
+        footnoteCounter = document.querySelectorAll('.footnote-item').length;
+    });
+</script>
+{% endblock %}

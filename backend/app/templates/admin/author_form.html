@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Редактирование автора" if is_edit else "Новый автор" }}{% endblock %}
+
+{% block content %}
+<h1>{{ "Редактирование автора" if is_edit else "Новый автор" }}</h1>
+
+<form onsubmit="submitAuthorForm(event, {{ 'true' if is_edit else 'false' }}, {{ author.id if author else 0 }})">
+    <div class="grid">
+        <label>
+            Имя *
+            <input type="text" name="name" value="{{ author.name if author else '' }}" required>
+        </label>
+        <label>
+            Slug *
+            <input type="text" name="slug" value="{{ author.slug if author else '' }}" required placeholder="ivan-ivanov">
+        </label>
+    </div>
+
+    <label>
+        Биография
+        <textarea name="bio" rows="4">{{ author.bio if author and author.bio else '' }}</textarea>
+    </label>
+
+    <label>
+        URL аватара
+        <div class="grid">
+            <input type="text" name="avatar_url" id="avatar_url" value="{{ author.avatar_url if author and author.avatar_url else '' }}">
+            <div>
+                <input type="file" accept="image/*" data-target="avatar_url" data-preview="avatar_preview" onchange="uploadImage(this)">
+                <img id="avatar_preview" src="{{ author.avatar_url if author and author.avatar_url else '' }}" style="display: {{ 'block' if author and author.avatar_url else 'none' }}; max-height:100px; margin-top:0.5rem; border-radius:50%;">
+            </div>
+        </div>
+    </label>
+
+    <div style="margin-top:1rem; display:flex; gap:1rem;">
+        <button type="submit">{{ "Сохранить" if is_edit else "Создать" }}</button>
+        <a href="/admin/authors" role="button" class="secondary outline">Отмена</a>
+    </div>
+</form>
+{% endblock %}

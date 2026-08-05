@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Админ-панель{% endblock %} — БОГЕМА</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        :root { --pico-font-size: 15px; }
+        .container { max-width: 960px; }
+        .nav-brand { font-weight: 700; font-size: 1.2rem; text-decoration: none; color: var(--pico-primary); }
+        .status-draft { color: #e67e22; }
+        .status-published { color: #27ae60; }
+        .actions { display: flex; gap: 0.5rem; }
+        .footnote-item { display: flex; gap: 0.5rem; align-items: start; margin-bottom: 0.5rem; }
+        .footnote-item input { flex: 1; }
+        .footnote-item button { flex-shrink: 0; }
+        .image-item { border: 1px solid var(--pico-muted-border-color); padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; }
+        .image-item-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
+        .image-item-row input[name="image_url"] { flex: 1; margin: 0; }
+        .image-index { font-family: monospace; font-weight: 700; color: var(--pico-primary); white-space: nowrap; min-width: 3rem; }
+        .image-upload-row { display: flex; gap: 0.75rem; align-items: start; margin-top: 0.4rem; }
+        .image-upload-row input[type="file"] { flex: 1; margin: 0; }
+        .image-preview { max-height: 80px; border-radius: 4px; }
+        .stat-card { text-align: center; padding: 2rem; }
+        .stat-card h2 { margin-bottom: 0; }
+        .stat-card p { color: #666; }
+    </style>
+</head>
+<body>
+    <nav class="container">
+        <ul>
+            <li><a href="/admin" class="nav-brand">📰 БОГЕМА</a></li>
+        </ul>
+        {% if request.cookies.get('access_token') %}
+        <ul>
+            <li><a href="/admin">Дашборд</a></li>
+            <li><a href="/admin/articles">Статьи</a></li>
+            <li><a href="/admin/authors">Авторы</a></li>
+            <li>
+                <form action="/api/admin/auth/logout" method="post" style="margin:0;padding:0;">
+                    <button class="outline secondary" type="submit" style="padding: 0.3rem 0.8rem; font-size: 0.85rem;">Выйти</button>
+                </form>
+            </li>
+        </ul>
+        {% endif %}
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container" style="text-align:center; padding:2rem; color:#999; font-size:0.85rem;">
+        БОГЕМА CMS © 2024
+    </footer>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        let footnoteCounter = 0;
+
+        function addFootnote() {
+            footnoteCounter++;
+            const container = document.getElementById('footnotes-container');
+            const div = document.createElement('div');
+            div.className = 'footnote-item';
+            div.innerHTML = `
+                <input type="hidden" name="footnote_number" value="${footnoteCounter}">
+                <input type="text" name="footnote_text" placeholder="Текст сноски ${footnoteCounter} *" required>
+                <button type="button" class="outline secondary" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        // --- Article inline images ---
+        // Positions are 1-based and assigned by DOM order in #images-container,
+        // so removing a row renumbers the rest. We refresh labels on every change.
+        function refreshImageIndices() {
+            const container = document.getElementById('images-container');
+            if (!container) return;
+            const items = container.querySelectorAll('.image-item');
+            items.forEach((item, idx) => {
+                const pos = idx + 1;
+                const hidden = item.querySelector('input[name="image_position"]');
+                if (hidden) hidden.value = pos;
+                const label = item.querySelector('.image-index');
+                if (label) label.textContent = `![${pos}]`;
+            });
+        }
+
+        function addArticleImage() {
+            const container = document.getElementById('images-container');
+            if (!container) return;
+            const div = document.createElement('div');
+            div.className = 'image-item';
+            div.innerHTML = `
+                <input type="hidden" name="image_position" value="0">
+                <div class="image-item-row">
+                    <span class="image-index">![1]</span>
+                    <input type="text" name="image_url" placeholder="URL изображения" data-role="url" required>
+                    <button type="button" class="outline secondary" onclick="this.closest('.image-item').remove(); refreshImageIndices();">✕</button>
+                </div>
+                <input type="text" name="image_caption" placeholder="Подпись (необязательно)">
+                <div class="image-upload-row">
+                    <input type="file" accept="image/*" onchange="uploadImageToItem(this)">
+                    <img class="image-preview" src="" alt="" style="display:none;">
+                </div>
+            `;
+            container.appendChild(div);
+            refreshImageIndices();
+        }
+
+        // Upload a file and fill the url field + preview within the same .image-item.
+        async function uploadImageToItem(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const item = input.closest('.image-item');
+            const formData = new FormData();
+            formData.append('file', file);
+            const token = getCookie('access_token');
+            const response = await fetch('/api/admin/images/upload', {
+                method: 'POST',
+                headers: { 'Authorization': token },
+                body: formData,
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const urlField = item.querySelector('input[name="image_url"]');
+                if (urlField) urlField.value = data.url;
+                const preview = item.querySelector('.image-preview');
+                if (preview) { preview.src = data.url; preview.style.display = 'block'; }
+            } else {
+                alert('Ошибка загрузки изображения');
+            }
+        }
+
+        async function uploadImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            const token = getCookie('access_token');
+            const response = await fetch('/api/admin/images/upload', {
+                method: 'POST',
+                headers: { 'Authorization': token },
+                body: formData,
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const urlField = document.getElementById(input.dataset.target);
+                if (urlField) urlField.value = data.url;
+                const preview = document.getElementById(input.dataset.preview);
+                if (preview) { preview.src = data.url; preview.style.display = 'block'; }
+            } else {
+                alert('Ошибка загрузки изображения');
+            }
+        }
+
+        async function submitArticleForm(event, isEdit, articleId) {
+            event.preventDefault();
+            const form = event.target;
+            const token = getCookie('access_token');
+            const footnotes = [];
+            document.querySelectorAll('.footnote-item').forEach((item) => {
+                const numberInput = item.querySelector('input[name="footnote_number"]');
+                const textInput = item.querySelector('input[name="footnote_text"]');
+                if (textInput.value.trim()) {
+                    footnotes.push({ number: parseInt(numberInput.value), text: textInput.value.trim() });
+                }
+            });
+            // Inline images: refresh positions by DOM order, then collect.
+            refreshImageIndices();
+            const images = [];
+            document.querySelectorAll('#images-container .image-item').forEach((item, idx) => {
+                const urlInput = item.querySelector('input[name="image_url"]');
+                const captionInput = item.querySelector('input[name="image_caption"]');
+                if (urlInput && urlInput.value.trim()) {
+                    images.push({
+                        url: urlInput.value.trim(),
+                        caption: captionInput ? captionInput.value.trim() : null,
+                        position: idx + 1,
+                    });
+                }
+            });
+            // Tags: parse comma-separated input into [{name: ...}] (skip blanks)
+            const tags = [];
+            if (form.tags && form.tags.value) {
+                form.tags.value.split(',').forEach((raw) => {
+                    const name = raw.trim();
+                    if (name) tags.push({ name });
+                });
+            }
+            const data = {
+                title: form.title.value,
+                slug: form.slug.value,
+                subtitle: form.subtitle.value,
+                body: form.body.value,
+                author_id: parseInt(form.author_id.value),
+                status: form.status.value,
+                section: form.section ? (form.section.value || null) : null,
+                cover_image_url: form.cover_image_url.value || null,
+                footnotes: footnotes,
+                images: images,
+                tags: tags,
+            };
+            const url = isEdit ? `/api/admin/articles/${articleId}` : '/api/admin/articles';
+            const method = isEdit ? 'PUT' : 'POST';
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify(data),
+            });
+            if (response.ok) {
+                window.location.href = '/admin/articles';
+            } else {
+                const err = await response.json();
+                alert('Ошибка: ' + (err.detail || JSON.stringify(err)));
+            }
+        }
+
+        async function submitAuthorForm(event, isEdit, authorId) {
+            event.preventDefault();
+            const form = event.target;
+            const token = getCookie('access_token');
+            const data = {
+                name: form.name.value,
+                slug: form.slug.value,
+                bio: form.bio.value,
+                avatar_url: form.avatar_url.value || null,
+            };
+            const url = isEdit ? `/api/admin/authors/${authorId}` : '/api/admin/authors';
+            const method = isEdit ? 'PUT' : 'POST';
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify(data),
+            });
+            if (response.ok) {
+                window.location.href = '/admin/authors';
+            } else {
+                const err = await response.json();
+                alert('Ошибка: ' + (err.detail || JSON.stringify(err)));
+            }
+        }
+
+        function confirmDelete(message) {
+            return confirm(message || 'Удалить? Это действие нельзя отменить.');
+        }
+
+        async function submitLoginForm(event) {
+            event.preventDefault();
+            const form = event.target;
+            const response = await fetch('/api/admin/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: form.username.value, password: form.password.value }),
+            });
+            if (response.ok) {
+                window.location.href = '/admin';
+            } else {
+                const err = await response.json();
+                document.getElementById('login-error').textContent = err.detail || 'Ошибка входа';
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

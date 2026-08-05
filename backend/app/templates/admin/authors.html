@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Авторы{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Авторы</h1>
+    <a href="/admin/authors/new" role="button">+ Новый автор</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Имя</th>
+            <th>Slug</th>
+            <th>Статей</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for author in authors %}
+        <tr>
+            <td>
+                <strong>{{ author.name }}</strong>
+                {% if author.bio %}<br><small style="color:#666;">{{ author.bio[:80] }}{% if author.bio|length > 80 %}...{% endif %}</small>{% endif %}
+            </td>
+            <td><code>{{ author.slug }}</code></td>
+            <td>{{ author.articles|length }}</td>
+            <td class="actions">
+                <a href="/admin/authors/{{ author.id }}/edit" role="button" class="outline secondary" style="padding:0.3rem 0.6rem;">✏️</a>
+                <form action="/admin/authors/{{ author.id }}/delete" method="post" onsubmit="return confirmDelete('Удалить автора «{{ author.name }}»? Все его статьи будут также удалены.')">
+                    <button type="submit" class="outline secondary" style="padding:0.3rem 0.6rem; color:#e74c3c;">🗑️</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not authors %}
+<p style="text-align:center; color:#999; margin-top:2rem;">Авторов пока нет. Добавьте первого!</p>
+{% endif %}
+{% endblock %}

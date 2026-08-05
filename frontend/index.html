@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>БОГЕМА — свежие материалы</title>
+    <meta name="description" content="Свежие материалы и статьи журнала БОГЕМА.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=2">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📰</text></svg>">
+    <script>
+        // Apply theme before first paint to avoid flash. theme.js wires up the toggle.
+        (function () {
+            try {
+                var t = localStorage.getItem("media-theme");
+                if (t !== "light" && t !== "dark") {
+                    t = (window.matchMedia &&
+                         window.matchMedia("(prefers-color-scheme: dark)").matches)
+                        ? "dark" : "light";
+                }
+                document.documentElement.setAttribute("data-theme", t);
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="/" class="brand">БОГЕМА</a>
+            <nav class="section-nav" id="section-nav" aria-label="Разделы"></nav>
+            <div class="header-tools">
+                <span class="ticker" id="ticker" aria-hidden="true"></span>
+                <button id="theme-toggle" class="icon-btn" type="button"
+                        aria-label="Переключить тему" title="Переключить тему">
+                    <span class="theme-icon" data-icon="sun">☀</span>
+                    <span class="theme-icon" data-icon="moon">☾</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="feed-context" class="feed-context" hidden></div>
+        <section class="feed-controls">
+            <div class="controls-left">
+                <h1 class="feed-title">Лента</h1>
+            </div>
+            <div class="controls-right">
+                <label class="control">
+                    <span class="control-label">Автор</span>
+                    <select id="author-filter" class="select">
+                        <option value="">Все</option>
+                    </select>
+                </label>
+                <label class="control">
+                    <span class="control-label">Сортировка</span>
+                    <select id="sort-order" class="select">
+                        <option value="new">Сначала новые</option>
+                        <option value="old">Сначала старые</option>
+                    </select>
+                </label>
+            </div>
+        </section>
+
+        <section id="hero-slot" class="hero-slot" aria-label="Главный материал"></section>
+
+        <section id="feed" class="feed-grid" aria-label="Лента материалов"></section>
+
+        <div id="feed-empty" class="feed-empty" hidden>
+            <p>Материалы не найдены.</p>
+        </div>
+
+        <div class="feed-more">
+            <button id="load-more" class="btn-outline" type="button" hidden>Загрузить ещё</button>
+        </div>
+
+        <div id="feed-error" class="feed-error" hidden>
+            <p>Не удалось загрузить материалы. Попробуйте обновить страницу.</p>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>© <span id="year"></span> БОГЕМА</span>
+            <nav class="footer-links">
+                <a href="/">Главная</a>
+                <a href="/admin">Редакция</a>
+            </nav>
+        </div>
+    </footer>
+
+    <template id="hero-template">
+        <article class="hero-card">
+            <a class="hero-card-link" href="">
+                <div class="hero-card-media">
+                    <img class="hero-card-img" src="" alt="" loading="lazy">
+                </div>
+                <div class="hero-card-body">
+                    <div class="card-meta">
+                        <span class="card-date"></span>
+                    </div>
+                    <h2 class="hero-card-title"></h2>
+                    <p class="hero-card-lead"></p>
+                    <div class="card-author">
+                        <img class="author-avatar" src="" alt="" loading="lazy">
+                        <span class="author-name"></span>
+                    </div>
+                </div>
+            </a>
+        </article>
+    </template>
+
+    <template id="card-template">
+        <article class="card">
+            <a class="card-link" href="">
+                <div class="card-media">
+                    <img class="card-img" src="" alt="" loading="lazy">
+                </div>
+                <div class="card-body">
+                    <div class="card-meta">
+                        <span class="card-date"></span>
+                    </div>
+                    <h3 class="card-title"></h3>
+                    <p class="card-lead"></p>
+                    <div class="card-author">
+                        <img class="author-avatar" src="" alt="" loading="lazy">
+                        <span class="author-name"></span>
+                    </div>
+                </div>
+            </a>
+        </article>
+    </template>
+
+    <script src="/assets/js/theme.js?v=2"></script>
+    <script src="/assets/js/api.js?v=2"></script>
+    <script src="/assets/js/feed.js?v=2"></script>
+</body>
+</html>

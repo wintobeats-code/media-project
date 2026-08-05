@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 4rem auto;">
+    <article>
+        <header><h2>Вход в админ-панель</h2></header>
+        <form onsubmit="submitLoginForm(event)">
+            <label>
+                Логин
+                <input type="text" name="username" required autocomplete="username">
+            </label>
+            <label>
+                Пароль
+                <input type="password" name="password" required autocomplete="current-password">
+            </label>
+            <div id="login-error" class="status-draft" style="display:none; margin-bottom:1rem;"></div>
+            <button type="submit">Войти</button>
+        </form>
+    </article>
+</div>
+{% endblock %}

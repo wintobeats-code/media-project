@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статья — БОГЕМА</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=2">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📰</text></svg>">
+    <script>
+        // Apply theme before first paint to avoid flash. theme.js wires up the toggle.
+        (function () {
+            try {
+                var t = localStorage.getItem("media-theme");
+                if (t !== "light" && t !== "dark") {
+                    t = (window.matchMedia &&
+                         window.matchMedia("(prefers-color-scheme: dark)").matches)
+                        ? "dark" : "light";
+                }
+                document.documentElement.setAttribute("data-theme", t);
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="/" class="brand">БОГЕМА</a>
+            <nav class="section-nav" id="section-nav" aria-label="Разделы"></nav>
+            <div class="header-tools">
+                <button id="theme-toggle" class="icon-btn" type="button"
+                        aria-label="Переключить тему" title="Переключить тему">
+                    <span class="theme-icon" data-icon="sun">☀</span>
+                    <span class="theme-icon" data-icon="moon">☾</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <article id="article" class="article" aria-live="polite">
+            <div id="article-loading" class="article-loading">
+                <div class="skeleton skeleton-title"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line short"></div>
+                <div class="skeleton skeleton-cover"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line short"></div>
+            </div>
+
+            <div id="article-error" class="feed-error" hidden>
+                <p>Статья не найдена или ещё не опубликована.</p>
+                <p><a href="/" class="btn-outline">Вернуться на главную</a></p>
+            </div>
+
+            <div id="article-content" hidden>
+                <header class="article-header">
+                    <div class="card-meta">
+                        <a id="article-section" class="section-badge" hidden href="/"></a>
+                        <span id="article-date" class="card-date"></span>
+                    </div>
+                    <h1 id="article-title" class="article-title"></h1>
+                    <p id="article-subtitle" class="article-subtitle"></p>
+                    <div id="article-author" class="article-byline">
+                        <img id="author-avatar" class="author-avatar author-avatar-lg" src="" alt="" loading="lazy">
+                        <span class="author-name author-name-lg" id="author-name"></span>
+                    </div>
+                </header>
+
+                <div id="article-cover" class="article-cover" hidden>
+                    <img id="cover-img" src="" alt="" loading="lazy">
+                </div>
+
+                <div id="article-body" class="article-body markdown-body"></div>
+
+                <div id="article-tags" class="article-tags" hidden></div>
+
+                <section id="article-images" class="article-gallery" hidden aria-label="Галерея"></section>
+
+                <section id="article-footnotes" class="footnotes" hidden aria-label="Сноски">
+                    <h2 class="footnotes-title">Сноски</h2>
+                    <ol id="footnotes-list" class="footnotes-list"></ol>
+                </section>
+            </div>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>© <span id="year"></span> БОГЕМА</span>
+            <nav class="footer-links">
+                <a href="/">Главная</a>
+                <a href="/admin">Редакция</a>
+            </nav>
+        </div>
+    </footer>
+
+    <!-- Markdown renderer (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+    <script src="/assets/js/theme.js?v=4"></script>
+    <script src="/assets/js/api.js?v=4"></script>
+    <script src="/assets/js/article.js?v=4"></script>
+</body>
+</html>

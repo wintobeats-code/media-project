@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Статьи{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Статьи</h1>
+    <a href="/admin/articles/new" role="button">+ Новая статья</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Заголовок</th>
+            <th>Автор</th>
+            <th>Статус</th>
+            <th>Дата</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for article in articles %}
+        <tr>
+            <td>
+                <strong>{{ article.title }}</strong>
+                {% if article.subtitle %}<br><small style="color:#666;">{{ article.subtitle }}</small>{% endif %}
+            </td>
+            <td>{{ article.author.name if article.author else "—" }}</td>
+            <td>
+                <span class="status-{{ article.status }}">
+                    {{ "Опубликована" if article.status == "published" else "Черновик" }}
+                </span>
+            </td>
+            <td>
+                {% if article.published_at %}
+                    {{ article.published_at.strftime("%d.%m.%Y") }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td class="actions">
+                <a href="/admin/articles/{{ article.id }}/edit" role="button" class="outline secondary" style="padding:0.3rem 0.6rem;">✏️</a>
+                <form action="/admin/articles/{{ article.id }}/delete" method="post" onsubmit="return confirmDelete('Удалить статью «{{ article.title }}»?')">
+                    <button type="submit" class="outline secondary" style="padding:0.3rem 0.6rem; color:#e74c3c;">🗑️</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not articles %}
+<p style="text-align:center; color:#999; margin-top:2rem;">Статей пока нет. Создайте первую!</p>
+{% endif %}
+{% endblock %}

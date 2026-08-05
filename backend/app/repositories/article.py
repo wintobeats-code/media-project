@@ -1,0 +1,79 @@
+from typing import List, Optional
+
+from app.models.article import Article
+from app.models.tag import Tag
+from app.repositories.base import BaseRepository
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+class ArticleRepository(BaseRepository[Article]):
+    def __init__(self, session: AsyncSession):
+        super().__init__(Article, session)
+
+    async def get_published(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 20,
+        section: Optional[str] = None,
+        tag: Optional[str] = None,
+    ) -> List[Article]:
+        query = (
+            select(Article)
+            .where(Article.status == "published")
+            .order_by(Article.published_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        if section:
+            query = query.where(Article.section == section)
+        if tag:
+            query = query.join(Article.tags).where(Tag.slug == tag)
+        result = await self.session.execute(query)
+        return list(result.scalars().unique().all())
+
+    async def get_by_slug_published(self, slug: str) -> Optional[Article]:
+        query = select(Article).where(
+            Article.slug == slug, Article.status == "published"
+        )
+        result = await self.session.execute(query)
+        return result.scalars().first()
+
+    async def count_published(
+        self,
+        *,
+        section: Optional[str] = None,
+        tag: Optional[str] = None,
+    ) -> int:
+        query = select(func.count(Article.id)).where(Article.status == "published")
+        if section:
+            query = query.where(Article.section == section)
+        if tag:
+            query = query.join(Article.tags).where(Tag.slug == tag)
+        result = await self.session.execute(query)
+        return int(result.scalar() or 0)
+
+    async def get_all_admin(self, *, offset: int = 0, limit: int = 20) -> List[Article]:
+        query = (
+            select(Article)
+            .order_by(Article.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
+    async def count_all(self) -> int:
+        return await self.count()
+
+    async def section_counts(self) -> dict:
+        """Возвращает {slug_раздела: количество_опубликованных} для всех разделов."""
+        query = (
+            select(Article.section, func.count(Article.id))
+            .where(Article.status == "published", Article.section.is_not(None))
+            .group_by(Article.section)
+        )
+        result = await self.session.execute(query)
+        return {slug: int(cnt) for slug, cnt in result.all() if slug}
+
