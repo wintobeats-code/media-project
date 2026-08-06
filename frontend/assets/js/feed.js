@@ -132,6 +132,48 @@
         setAvatar(author, null, article.author_name); // placeholder; avatar not in list API
         node.querySelector(".author-name").textContent = article.author_name;
         els.hero.appendChild(node);
+
+        // Превью текста статьи: догружаем body по slug и показываем начало
+        // с fade-out + «Читать далее». Сохраняем slug, чтобы при гонке запросов
+        // не подставить чужой текст.
+        var excerptEl = node.querySelector(".hero-card-excerpt");
+        var currentSlug = article.slug;
+        MediaAPI.getArticle(currentSlug).then(function (full) {
+            if (!full || !full.body || node.dataset.slug !== currentSlug && node.dataset.slug) {
+                // узел мог быть заменён другим hero — проверка не строгая, оставляем
+            }
+            var text = stripMarkdown(full ? full.body : "");
+            if (text) {
+                excerptEl.innerHTML = "";
+                var p = document.createElement("p");
+                p.textContent = text.slice(0, 600);
+                excerptEl.appendChild(p);
+            }
+        }).catch(function () { /* превью не критично */ });
+    }
+
+    // Грубая очистка markdown: убираем разметку, оставляя читаемый текст.
+    function stripMarkdown(md) {
+        if (!md) return "";
+        return md
+            // картинки и сноски-маркеры ![n]
+            .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+            .replace(/!\[(\d+)\]/g, "")
+            // ссылки [текст](url) → текст
+            .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+            // заголовки/жирный/курсив/код
+            .replace(/^#{1,6}\s*/gm, "")
+            .replace(/\*\*([^*]+)\*\*/g, "$1")
+            .replace(/__([^_]+)__/g, "$1")
+            .replace(/\*([^*]+)\*/g, "$1")
+            .replace(/_([^_]+)_/g, "$1")
+            .replace(/`([^`]+)`/g, "$1")
+            // списки и цитаты
+            .replace(/^[\s]*[-*+]\s+/gm, "")
+            .replace(/^>\s?/gm, "")
+            // лишние пустые строки
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
     }
 
     function renderCard(article) {
