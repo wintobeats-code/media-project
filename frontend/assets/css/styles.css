@@ -269,8 +269,8 @@ button { font: inherit; cursor: pointer; }
 .hero-card-lead { color: var(--text-soft); margin: 0 0 18px; font-size: 1.05rem; }
 
 @media (min-width: 760px) {
-    .hero-card { display: grid; grid-template-columns: 1.1fr 1fr; align-items: stretch; }
-    .hero-card-media { aspect-ratio: 16 / 9; height: 100%; }
+    .hero-card { display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; }
+    .hero-card-media { aspect-ratio: 16 / 9; }
     .hero-card-body { display: flex; flex-direction: column; justify-content: center; }
 }
 
