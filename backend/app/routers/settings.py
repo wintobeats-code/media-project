@@ -20,10 +20,13 @@ def extract_embed_url(raw: str) -> str | None:
     """Извлекает embed-URL Яндекс Музыки из произвольного ввода редактора.
 
     Поддерживаемые форматы:
-      1. Готовый HTML-код вставки (из «Поделиться» Яндекса) — берём src из iframe:
-         <iframe ... src="https://music.yandex.ru/iframe/#track/..."></iframe>
-      2. Готовая embed-ссылка: https://music.yandex.ru/iframe/#track/<album>/<track>
-      3. Обычная ссылка трека: https://music.yandex.ru/album/<album>/track/<track>
+      1. Готовый HTML-код вставки (из «Поделиться» Яндекса) — берём src из iframe
+         КАК ЕСТЬ (Яндекс использует разные форматы: с #track/ и с album/.../track/,
+         и они показывают разные треки — поэтому не пере конвертируем):
+         <iframe ... src="https://music.yandex.ru/iframe/...">
+      2. Готовая embed-ссылка music.yandex.ru/iframe/... — отдаём как есть.
+      3. Обычная ссылка трека music.yandex.ru/album/.../track/... —
+         конвертируем в embed (format без #, как в актуальном коде Яндекса).
 
     Возвращает embed-URL или None.
     """
@@ -31,23 +34,23 @@ def extract_embed_url(raw: str) -> str | None:
         return None
     raw = raw.strip()
 
-    # 1) HTML-код: ищем src iframe, который ведёт на music.yandex.ru/iframe
+    # 1) HTML-код: берём src iframe на music.yandex.ru/iframe/ как есть
     m = re.search(
-        r'src=["\'](https?://music\.yandex\.ru/iframe/#track/[^"\']+)["\']',
+        r'src=["\'](https?://music\.yandex\.ru/iframe/[^"\']+)["\']',
         raw,
     )
     if m:
         return m.group(1)
 
-    # 2) Уже embed-ссылка
-    m = re.search(r"music\.yandex\.ru/iframe/#track/(\d+)/(\d+)", raw)
+    # 2) Уже готовая embed-ссылка (любой формат iframe/...) — отдаём как есть
+    m = re.search(r"https?://music\.yandex\.ru/iframe/[^\s\"'<]+", raw)
     if m:
-        return f"https://music.yandex.ru/iframe/#track/{m.group(1)}/{m.group(2)}"
+        return m.group(0)
 
-    # 3) Обычная ссылка трека: .../album/<album>/track/<track>
+    # 3) Обычная ссылка трека: .../album/<album>/track/<track> → embed без #
     m = re.search(r"/album/(\d+)/track/(\d+)", raw)
     if m:
-        return f"https://music.yandex.ru/iframe/#track/{m.group(1)}/{m.group(2)}"
+        return f"https://music.yandex.ru/iframe/album/{m.group(1)}/track/{m.group(2)}"
 
     return None
 
