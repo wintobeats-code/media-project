@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap">
-    <link rel="stylesheet" href="/assets/css/styles.css?v=12">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=13">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📰</text></svg>">
     <script>
         // Apply theme before first paint to avoid flash. theme.js wires up the toggle.
@@ -56,19 +56,22 @@
                 <h1 class="feed-title">Лента</h1>
             </div>
             <div class="controls-right">
-                <label class="control">
+                <div class="control dropdown" id="author-dropdown">
                     <span class="control-label">Автор</span>
-                    <select id="author-filter" class="select">
-                        <option value="">Все</option>
-                    </select>
-                </label>
-                <label class="control">
+                    <button type="button" class="dropdown-btn" data-dropdown-toggle>
+                        <span class="dropdown-value" data-dropdown-value>Все</span>
+                        <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </button>
+                    <ul class="dropdown-menu" role="listbox" data-dropdown-menu></ul>
+                </div>
+                <div class="control dropdown" id="sort-dropdown">
                     <span class="control-label">Сортировка</span>
-                    <select id="sort-order" class="select">
-                        <option value="new">Сначала новые</option>
-                        <option value="old">Сначала старые</option>
-                    </select>
-                </label>
+                    <button type="button" class="dropdown-btn" data-dropdown-toggle>
+                        <span class="dropdown-value" data-dropdown-value>Сначала новые</span>
+                        <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </button>
+                    <ul class="dropdown-menu" role="listbox" data-dropdown-menu></ul>
+                </div>
             </div>
         </section>
 
@@ -145,8 +148,9 @@
         </article>
     </template>
 
-    <script src="/assets/js/theme.js?v=12"></script>
-    <script src="/assets/js/api.js?v=12"></script>
-    <script src="/assets/js/feed.js?v=12"></script>
+    <script src="/assets/js/theme.js?v=13"></script>
+    <script src="/assets/js/dropdown.js?v=13"></script>
+    <script src="/assets/js/api.js?v=13"></script>
+    <script src="/assets/js/feed.js?v=13"></script>
 </body>
 </html>

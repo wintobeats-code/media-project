@@ -25,8 +25,8 @@
         els.empty = document.getElementById("feed-empty");
         els.error = document.getElementById("feed-error");
         els.loadMore = document.getElementById("load-more");
-        els.authorFilter = document.getElementById("author-filter");
-        els.sortOrder = document.getElementById("sort-order");
+        els.authorDropdown = document.getElementById("author-dropdown");
+        els.sortDropdown = document.getElementById("sort-dropdown");
         els.ticker = document.getElementById("ticker");
         els.year = document.getElementById("year");
         els.sectionNav = document.getElementById("section-nav");
@@ -212,18 +212,14 @@
 
     function populateAuthorFilter(articles) {
         var seen = {};
-        // keep existing selected value if any
-        var current = state.authorFilter;
-        var optionsHtml = '<option value="">Все</option>';
+        var items = [{ value: "", label: "Все авторы" }];
         articles.forEach(function (a) {
             var slug = a.author_slug;
             if (!slug || seen[slug]) return;
             seen[slug] = true;
-            optionsHtml += '<option value="' + slug + '">' +
-                escapeHtml(a.author_name) + "</option>";
+            items.push({ value: slug, label: a.author_name });
         });
-        els.authorFilter.innerHTML = optionsHtml;
-        els.authorFilter.value = current || "";
+        if (authorDD) authorDD.setItems(items);
     }
 
     function escapeHtml(s) {
@@ -379,18 +375,35 @@
 
     /* ---------- events ---------- */
 
+    // Ссылки на инициализированные dropdown'ы
+    var authorDD = null;
+    var sortDD = null;
+
     function bindEvents() {
         els.loadMore.addEventListener("click", loadNext);
 
-        els.authorFilter.addEventListener("change", function () {
-            state.authorFilter = els.authorFilter.value;
-            applyFilterAndSort();
-            updateEmptyState();
+        // Кастомный dropdown «Автор»
+        authorDD = createDropdown(els.authorDropdown, {
+            items: [{ value: "", label: "Все авторы" }],
+            value: state.authorFilter,
+            onChange: function (val) {
+                state.authorFilter = val;
+                applyFilterAndSort();
+                updateEmptyState();
+            },
         });
 
-        els.sortOrder.addEventListener("change", function () {
-            state.sort = els.sortOrder.value;
-            applyFilterAndSort();
+        // Кастомный dropdown «Сортировка»
+        sortDD = createDropdown(els.sortDropdown, {
+            items: [
+                { value: "new", label: "Сначала новые" },
+                { value: "old", label: "Сначала старые" },
+            ],
+            value: state.sort,
+            onChange: function (val) {
+                state.sort = val;
+                applyFilterAndSort();
+            },
         });
 
         // Делегирование клика/Enter по section-badge внутри карточек
