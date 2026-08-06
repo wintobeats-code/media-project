@@ -13,7 +13,8 @@
         authorFilter: "",
         sort: "new",
         section: params.get("section") || "",   // from ?section=slug
-        tag: params.get("tag") || ""            // from ?tag=slug
+        tag: params.get("tag") || "",           // from ?tag=slug
+        allTags: []                             // все теги (для поиска), из /api/tags
     };
 
     var els = {};
@@ -27,6 +28,8 @@
         els.loadMore = document.getElementById("load-more");
         els.authorDropdown = document.getElementById("author-dropdown");
         els.sortDropdown = document.getElementById("sort-dropdown");
+        els.searchInput = document.getElementById("search-input");
+        els.searchSuggest = document.getElementById("search-suggest");
         els.ticker = document.getElementById("ticker");
         els.year = document.getElementById("year");
         els.sectionNav = document.getElementById("section-nav");
@@ -373,6 +376,127 @@
             });
     }
 
+    /* ---------- поиск по тегам (autocomplete) ---------- */
+
+    var searchFocusIndex = -1;
+
+    // Загружаем все теги один раз для подсказок поиска.
+    function loadAllTags() {
+        return MediaAPI.listTags()
+            .then(function (tags) { state.allTags = tags || []; })
+            .catch(function () { state.allTags = []; });
+    }
+
+    // Подсказки по введённому тексту (по имени и slug, частичное совпадение).
+    function filterTags(query) {
+        var q = (query || "").toLowerCase().trim();
+        if (!q) return state.allTags.slice(0, 8);
+        return state.allTags.filter(function (t) {
+            return (t.name || "").toLowerCase().indexOf(q) !== -1 ||
+                   (t.slug || "").toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 8);
+    }
+
+    function renderSuggest(query) {
+        var matches = filterTags(query);
+        els.searchSuggest.innerHTML = "";
+        if (!matches.length) {
+            if (query && query.trim()) {
+                var empty = document.createElement("li");
+                empty.className = "search-suggest-empty";
+                empty.textContent = "Ничего не найдено";
+                els.searchSuggest.appendChild(empty);
+            }
+            els.searchSuggest.hidden = !query || !query.trim();
+            searchFocusIndex = -1;
+            return;
+        }
+        matches.forEach(function (t, idx) {
+            var li = document.createElement("li");
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "search-suggest-item";
+            b.dataset.slug = t.slug;
+            b.innerHTML = escapeHtml(t.name) +
+                ' <span class="tag-count">' + (t.count || 0) + '</span>';
+            b.addEventListener("click", function () {
+                applyTagFilter(t.slug);
+                els.searchInput.value = t.name;
+            });
+            b.addEventListener("mouseenter", function () {
+                setSuggestFocus(idx);
+            });
+            li.appendChild(b);
+            els.searchSuggest.appendChild(li);
+        });
+        searchFocusIndex = -1;
+        els.searchSuggest.hidden = false;
+    }
+
+    function setSuggestFocus(idx) {
+        searchFocusIndex = idx;
+        var items = els.searchSuggest.querySelectorAll(".search-suggest-item");
+        items.forEach(function (el, i) {
+            el.classList.toggle("focused", i === idx);
+        });
+    }
+
+    // Применяет тег как фильтр ленты (через URL ?tag=) и перезагружает страницу.
+    function applyTagFilter(slug) {
+        els.searchSuggest.hidden = true;
+        var url = "/?tag=" + encodeURIComponent(slug);
+        if (state.section) url += "&section=" + encodeURIComponent(state.section);
+        window.location.href = url;
+    }
+
+    function initSearch() {
+        if (!els.searchInput) return;
+        // Если из URL уже есть активный тег — покажем его в поле
+        if (state.tag) {
+            var found = state.allTags.filter(function (t) { return t.slug === state.tag; })[0];
+            els.searchInput.value = found ? found.name : state.tag;
+        }
+
+        els.searchInput.addEventListener("input", function () {
+            renderSuggest(this.value);
+        });
+        els.searchInput.addEventListener("focus", function () {
+            if (this.value) renderSuggest(this.value);
+            else if (state.allTags.length) renderSuggest("");
+        });
+        els.searchInput.addEventListener("keydown", function (e) {
+            var items = els.searchSuggest.querySelectorAll(".search-suggest-item");
+            if (e.key === "ArrowDown" && items.length) {
+                e.preventDefault();
+                setSuggestFocus(Math.min(searchFocusIndex + 1, items.length - 1));
+            } else if (e.key === "ArrowUp" && items.length) {
+                e.preventDefault();
+                setSuggestFocus(Math.max(searchFocusIndex - 1, 0));
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                if (searchFocusIndex >= 0 && items[searchFocusIndex]) {
+                    var slug = items[searchFocusIndex].dataset.slug;
+                    els.searchInput.value = items[searchFocusIndex].textContent.replace(/\d+$/, "").trim();
+                    applyTagFilter(slug);
+                } else {
+                    // нет подсветки — берём первый совпадающий тег или ищем частично
+                    var matches = filterTags(this.value);
+                    if (matches.length) {
+                        applyTagFilter(matches[0].slug);
+                    }
+                }
+            } else if (e.key === "Escape") {
+                els.searchSuggest.hidden = true;
+            }
+        });
+        // Закрытие подсказок при клике вне поля
+        document.addEventListener("click", function (e) {
+            if (!e.target.closest("#search-control")) {
+                els.searchSuggest.hidden = true;
+            }
+        });
+    }
+
     /* ---------- events ---------- */
 
     // Ссылки на инициализированные dropdown'ы
@@ -406,6 +530,8 @@
             },
         });
 
+        initSearch();
+
         // Делегирование клика/Enter по section-badge внутри карточек
         // (badge не вложён в <a>, чтобы HTML оставался валидным).
         var onBadgeActivate = function (e) {
@@ -430,6 +556,8 @@
         if (els.ticker) els.ticker.textContent = todayLabel();
         if (!els.feed) return;
         bindEvents();
+        // Теги для поиска — загружаем параллельно, не блокируя ленту
+        loadAllTags();
         // «Трек дня» — независимая загрузка, не блокирует ленту
         renderTrack();
         // section nav populates the slug->title map; context + feed use it.
