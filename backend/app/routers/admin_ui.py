@@ -41,7 +41,7 @@ async def admin_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
     from app.models.site_setting import SiteSetting
 
     track_row = await db.execute(
-        select(SiteSetting).where(SiteSetting.key == "track_of_day_url")
+        select(SiteSetting).where(SiteSetting.key == "track_of_day")
     )
     track_setting = track_row.scalars().first()
     return templates.TemplateResponse(
@@ -50,7 +50,7 @@ async def admin_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
             "request": request,
             "articles_count": articles_count,
             "authors_count": len(authors),
-            "track_url": track_setting.value if track_setting else "",
+            "track_value": track_setting.value if track_setting else "",
         },
     )
 

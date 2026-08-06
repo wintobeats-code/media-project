@@ -27,15 +27,14 @@
 
 <h2>Трек дня</h2>
 <p style="color: var(--pico-muted-color); font-size: 0.9rem;">
-    Вставьте ссылку на трек Яндекс Музыки (например
-    <code>https://music.yandex.ru/album/12345/track/67890</code>) — он появится на главной странице сайта.
+    В Яндекс Музыке откройте трек → «Поделиться» → «HTML код», скопируйте код
+    и вставьте его ниже. Трек появится на главной странице.
 </p>
 <form onsubmit="saveTrack(event)">
     <label>
-        Ссылка на трек
-        <input type="url" name="track_url" id="track-url"
-               value="{{ track_url or '' }}"
-               placeholder="https://music.yandex.ru/album/...">
+        HTML-код вставки (или прямая ссылка на трек)
+        <textarea name="track_value" id="track-value" rows="4"
+                  placeholder='<iframe src="https://music.yandex.ru/iframe/#track/..."></iframe>'>{{ track_value or '' }}</textarea>
     </label>
     <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
         <button type="submit">Сохранить</button>
@@ -47,22 +46,23 @@
 <script>
     async function saveTrack(event) {
         event.preventDefault();
-        const input = document.getElementById('track-url');
+        const input = document.getElementById('track-value');
         const status = document.getElementById('track-status');
         const token = getCookie('access_token');
+        status.style.color = 'var(--pico-muted-color)';
         status.textContent = 'Сохранение…';
         try {
             const resp = await fetch('/api/settings/track', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                body: JSON.stringify({ url: input.value }),
+                body: JSON.stringify({ value: input.value }),
             });
             if (resp.ok) {
                 const data = await resp.json();
-                status.style.color = 'var(--pico-primary)';
+                status.style.color = data.embed_url ? 'var(--pico-primary)' : '#c0392b';
                 status.textContent = data.embed_url
                     ? 'Сохранено — трек появится на главной.'
-                    : 'Сохранено, но ссылка не распознана. Проверьте формат.';
+                    : 'Не удалось распознать код. Скопируйте HTML-код из «Поделиться» Яндекса.';
             } else {
                 status.style.color = '#c0392b';
                 status.textContent = 'Ошибка сохранения.';

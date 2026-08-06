@@ -13,29 +13,39 @@ from app.models.site_setting import SiteSetting
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
-TRACK_KEY = "track_of_day_url"
+TRACK_KEY = "track_of_day"
 
 
-def parse_yandex_embed(url: str) -> str | None:
-    """Превращает ссылку на трек Яндекс Музыки в embed-URL для iframe.
+def extract_embed_url(raw: str) -> str | None:
+    """Извлекает embed-URL Яндекс Музыки из произвольного ввода редактора.
 
-    Поддерживаемые форматы входной ссылки:
-      - https://music.yandex.ru/album/<album_id>/track/<track_id>
-      - https://music.yandex.ru/track/<track_id> (без альбома — не подходит для embed)
-      - уже готовый embed: https://music.yandex.ru/iframe/#track/<album>/<track>
-    Возвращает embed-URL или None, если ссылку не удалось разобрать.
+    Поддерживаемые форматы:
+      1. Готовый HTML-код вставки (из «Поделиться» Яндекса) — берём src из iframe:
+         <iframe ... src="https://music.yandex.ru/iframe/#track/..."></iframe>
+      2. Готовая embed-ссылка: https://music.yandex.ru/iframe/#track/<album>/<track>
+      3. Обычная ссылка трека: https://music.yandex.ru/album/<album>/track/<track>
+
+    Возвращает embed-URL или None.
     """
-    if not url:
+    if not raw:
         return None
-    url = url.strip()
+    raw = raw.strip()
 
-    # Уже embed-ссылка
-    m = re.search(r"iframe/#track/(\d+)/(\d+)", url)
+    # 1) HTML-код: ищем src iframe, который ведёт на music.yandex.ru/iframe
+    m = re.search(
+        r'src=["\'](https?://music\.yandex\.ru/iframe/#track/[^"\']+)["\']',
+        raw,
+    )
+    if m:
+        return m.group(1)
+
+    # 2) Уже embed-ссылка
+    m = re.search(r"music\.yandex\.ru/iframe/#track/(\d+)/(\d+)", raw)
     if m:
         return f"https://music.yandex.ru/iframe/#track/{m.group(1)}/{m.group(2)}"
 
-    # Обычная ссылка трека: .../album/<album_id>/track/<track_id>
-    m = re.search(r"/album/(\d+)/track/(\d+)", url)
+    # 3) Обычная ссылка трека: .../album/<album>/track/<track>
+    m = re.search(r"/album/(\d+)/track/(\d+)", raw)
     if m:
         return f"https://music.yandex.ru/iframe/#track/{m.group(1)}/{m.group(2)}"
 
@@ -43,12 +53,14 @@ def parse_yandex_embed(url: str) -> str | None:
 
 
 class TrackOut(BaseModel):
-    url: str
+    # Что ввёл редактор (HTML-код или ссылка) и извлечённый embed-URL.
+    value: str
     embed_url: str | None = None
 
 
 class TrackIn(BaseModel):
-    url: str
+    # HTML-код вставки (из «Поделиться» Яндекса) или прямая ссылка.
+    value: str
 
 
 @router.get("/track", response_model=TrackOut)
@@ -58,8 +70,8 @@ async def get_track(db: AsyncSession = Depends(get_db)):
         select(SiteSetting).where(SiteSetting.key == TRACK_KEY)
     )
     setting = result.scalars().first()
-    url = setting.value if setting else ""
-    return TrackOut(url=url, embed_url=parse_yandex_embed(url))
+    value = setting.value if setting else ""
+    return TrackOut(value=value, embed_url=extract_embed_url(value))
 
 
 @router.put("/track", response_model=TrackOut)
@@ -68,16 +80,19 @@ async def set_track(
     admin: CurrentAdmin,
     db: AsyncSession = Depends(get_db),
 ):
-    """Сохранить «Трек дня» (только админ)."""
-    url = (data.url or "").strip()
+    """Сохранить «Трек дня» (только админ).
+
+    Принимает HTML-код вставки Яндекса или прямую ссылку на трек.
+    """
+    value = (data.value or "").strip()
     result = await db.execute(
         select(SiteSetting).where(SiteSetting.key == TRACK_KEY)
     )
     setting = result.scalars().first()
     if setting is None:
-        setting = SiteSetting(key=TRACK_KEY, value=url)
+        setting = SiteSetting(key=TRACK_KEY, value=value)
         db.add(setting)
     else:
-        setting.value = url
+        setting.value = value
     await db.commit()
-    return TrackOut(url=url, embed_url=parse_yandex_embed(url))
+    return TrackOut(value=value, embed_url=extract_embed_url(value))

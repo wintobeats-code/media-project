@@ -65,7 +65,7 @@
             .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
     };
 
-    /** Трек дня: {url, embed_url}. */
+    /** Трек дня: {value, embed_url}. */
     API.getTrack = function () {
         return fetch("/api/settings/track")
             .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
