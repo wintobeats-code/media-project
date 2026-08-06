@@ -424,7 +424,7 @@ button { font: inherit; cursor: pointer; }
     /* Grid вешаем на .hero-card-link — именно там лежат media и body
        как два прямых ребёнка (а не на .hero-card, у которого один ребёнок). */
     .hero-card-link { display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; }
-    .hero-card-media { aspect-ratio: 16 / 9; height: 100%; }
+    .hero-card-media { aspect-ratio: 16 / 9; }
     .hero-card-body { display: flex; flex-direction: column; justify-content: center; }
 }
 
