@@ -24,6 +24,8 @@
         els.gallery = document.getElementById("article-images");
         els.footnotes = document.getElementById("article-footnotes");
         els.fnList = document.getElementById("footnotes-list");
+        els.relatedSection = document.getElementById("related-articles");
+        els.relatedGrid = document.getElementById("related-grid");
         els.sectionNav = document.getElementById("section-nav");
         els.year = document.getElementById("year");
     }
@@ -412,6 +414,48 @@
         els.tags.hidden = false;
     }
 
+    // Блок «Читайте по теме»: догружаем свежие статьи (исключая текущую).
+    function renderRelated(slug) {
+        if (!els.relatedSection) return;
+        MediaAPI.relatedArticles(slug)
+            .then(function (items) {
+                if (!items || !items.length) { els.relatedSection.hidden = true; return; }
+                els.relatedGrid.innerHTML = "";
+                items.forEach(function (a) {
+                    var card = document.createElement("article");
+                    card.className = "related-card";
+                    var link = document.createElement("a");
+                    link.className = "related-link";
+                    link.href = "/article.html?slug=" + encodeURIComponent(a.slug);
+
+                    if (a.cover_image_url) {
+                        var media = document.createElement("div");
+                        media.className = "related-card-media";
+                        var img = document.createElement("img");
+                        img.src = a.cover_image_url;
+                        img.alt = "";
+                        img.loading = "lazy";
+                        media.appendChild(img);
+                        link.appendChild(media);
+                    }
+                    var title = document.createElement("h3");
+                    title.className = "related-card-title";
+                    title.textContent = a.title;
+                    link.appendChild(title);
+                    if (a.subtitle) {
+                        var sub = document.createElement("p");
+                        sub.className = "related-card-subtitle";
+                        sub.textContent = a.subtitle;
+                        link.appendChild(sub);
+                    }
+                    card.appendChild(link);
+                    els.relatedGrid.appendChild(card);
+                });
+                els.relatedSection.hidden = false;
+            })
+            .catch(function () { els.relatedSection.hidden = true; });
+    }
+
     function showError(message) {
         els.loading.hidden = true;
         els.content.hidden = true;
@@ -461,6 +505,8 @@
                 } catch (e) {
                     showError("Ошибка отрисовки: " + (e && e.message ? e.message : e));
                 }
+                // «Читайте по теме» — догружаем независимо
+                renderRelated(article.slug);
             })
             .catch(function (e) { showError("Ошибка загрузки: " + (e && e.message ? e.message : e)); });
     });

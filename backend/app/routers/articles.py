@@ -122,6 +122,14 @@ async def like_article(
     }
 
 
+@router.get("/{slug}/related", response_model=List[ArticleListItem])
+async def related_articles(slug: str, db: AsyncSession = Depends(get_db)):
+    """Свежие опубликованные статьи, кроме текущей (для блока «Читайте по теме»)."""
+    service = ArticleService(db)
+    articles = await service.list_related(slug, limit=3)
+    return [_to_list_item(a) for a in articles]
+
+
 # --- Meta endpoints (sections + tags) ---
 
 meta_router = APIRouter(tags=["meta"])

@@ -40,6 +40,19 @@ class ArticleRepository(BaseRepository[Article]):
         result = await self.session.execute(query)
         return result.scalars().first()
 
+    async def get_related(
+        self, *, exclude_slug: str, limit: int = 3
+    ) -> List[Article]:
+        """Свежие опубликованные статьи, кроме exclude_slug (для «Читайте по теме»)."""
+        query = (
+            select(Article)
+            .where(Article.status == "published", Article.slug != exclude_slug)
+            .order_by(Article.published_at.desc())
+            .limit(limit)
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().unique().all())
+
     async def count_published(
         self,
         *,

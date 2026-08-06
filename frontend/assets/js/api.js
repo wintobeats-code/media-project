@@ -71,5 +71,11 @@
             .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
     };
 
+    /** Связанные статьи (для блока «Читайте по теме»). */
+    API.relatedArticles = function (slug) {
+        return fetch("/api/articles/" + encodeURIComponent(slug) + "/related")
+            .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+    };
+
     global.MediaAPI = API;
 })(window);

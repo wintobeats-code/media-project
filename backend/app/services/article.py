@@ -53,6 +53,10 @@ class ArticleService:
     async def get_by_slug(self, slug: str) -> Optional[Article]:
         return await self.repo.get_by_slug_published(slug)
 
+    async def list_related(self, slug: str, limit: int = 3) -> List[Article]:
+        """Свежие опубликованные статьи, кроме текущей (для блока «Читайте по теме»)."""
+        return await self.repo.get_related(exclude_slug=slug, limit=limit)
+
     async def get_by_id(self, article_id: int) -> Optional[Article]:
         return await self.repo.get(article_id)
 

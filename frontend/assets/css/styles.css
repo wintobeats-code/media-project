@@ -862,3 +862,54 @@ button { font: inherit; cursor: pointer; }
     border: 0;
     border-radius: var(--radius);
 }
+
+/* ---------- Читайте по теме ---------- */
+.related {
+    max-width: var(--container);
+    margin: 56px auto 0;
+    padding: 0 24px;
+}
+.related-title {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+    margin: 0 0 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--hairline);
+}
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 28px 24px;
+}
+@media (min-width: 560px) { .related-grid { grid-template-columns: repeat(3, 1fr); } }
+.related-card { display: flex; flex-direction: column; }
+.related-link { display: flex; flex-direction: column; height: 100%; }
+.related-link:hover { color: inherit; }
+.related-card:hover .related-card-title { color: var(--accent); }
+.related-card-media {
+    aspect-ratio: 16 / 9;
+    background: var(--bg-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+.related-card-media img { width: 100%; height: 100%; object-fit: cover; }
+.related-card-title {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 8px;
+    transition: color 0.15s ease;
+    overflow-wrap: anywhere;
+}
+.related-card-subtitle {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
