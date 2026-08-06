@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap">
-    <link rel="stylesheet" href="/assets/css/styles.css?v=8">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=9">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📰</text></svg>">
     <script>
         // Apply theme before first paint to avoid flash. theme.js wires up the toggle.
@@ -51,11 +51,6 @@
     <main class="container">
         <div id="feed-context" class="feed-context" hidden></div>
 
-        <section id="track-of-day" class="track-of-day" hidden aria-label="Трек дня">
-            <h2 class="track-title">Трек дня</h2>
-            <div class="track-player" id="track-player"></div>
-        </section>
-
         <section class="feed-controls">
             <div class="controls-left">
                 <h1 class="feed-title">Лента</h1>
@@ -78,6 +73,11 @@
         </section>
 
         <section id="hero-slot" class="hero-slot" aria-label="Главный материал"></section>
+
+        <section id="track-of-day" class="track-of-day" hidden aria-label="Трек дня">
+            <h2 class="track-title">Трек дня</h2>
+            <div class="track-player" id="track-player"></div>
+        </section>
 
         <section id="feed" class="feed-grid" aria-label="Лента материалов"></section>
 
@@ -145,8 +145,8 @@
         </article>
     </template>
 
-    <script src="/assets/js/theme.js?v=8"></script>
-    <script src="/assets/js/api.js?v=8"></script>
-    <script src="/assets/js/feed.js?v=8"></script>
+    <script src="/assets/js/theme.js?v=9"></script>
+    <script src="/assets/js/api.js?v=9"></script>
+    <script src="/assets/js/feed.js?v=9"></script>
 </body>
 </html>

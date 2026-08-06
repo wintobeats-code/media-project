@@ -269,8 +269,8 @@ button { font: inherit; cursor: pointer; }
 .hero-card-lead { color: var(--text-soft); margin: 0 0 18px; font-size: 1.05rem; }
 
 @media (min-width: 760px) {
-    .hero-card { display: grid; grid-template-columns: 1.1fr 1fr; }
-    .hero-card-media { aspect-ratio: auto; min-height: 340px; }
+    .hero-card { display: grid; grid-template-columns: 1.1fr 1fr; align-items: stretch; }
+    .hero-card-media { aspect-ratio: 16 / 9; height: 100%; }
     .hero-card-body { display: flex; flex-direction: column; justify-content: center; }
 }
 
@@ -296,7 +296,7 @@ button { font: inherit; cursor: pointer; }
 .card:hover .card-title { color: var(--accent); }
 
 .card-media {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 16 / 9;
     background: var(--bg-soft);
     border-radius: var(--radius);
     overflow: hidden;
@@ -671,20 +671,19 @@ button { font: inherit; cursor: pointer; }
 
 /* ---------- Трек дня ---------- */
 .track-of-day {
-    margin: 28px 0 36px;
-    padding: 24px;
-    border: 1px solid var(--hairline);
-    border-radius: var(--radius-lg);
-    background: var(--bg-elevated);
+    margin: 32px 0 36px;
+    padding: 22px 0;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
 }
 .track-title {
     font-family: var(--font-display);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.14em;
     color: var(--text-muted);
-    margin: 0 0 16px;
+    margin: 0 0 14px;
 }
 .track-player iframe {
     width: 100%;
