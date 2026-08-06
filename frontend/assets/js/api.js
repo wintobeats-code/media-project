@@ -65,5 +65,11 @@
             .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
     };
 
+    /** Трек дня: {url, embed_url}. */
+    API.getTrack = function () {
+        return fetch("/api/settings/track")
+            .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+    };
+
     global.MediaAPI = API;
 })(window);

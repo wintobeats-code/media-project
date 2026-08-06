@@ -12,6 +12,7 @@ from app.models import (  # noqa: F401
     article_like,
     author,
     footnote,
+    site_setting,
     tag,
 )
 from sqlalchemy import pool

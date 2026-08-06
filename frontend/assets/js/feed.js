@@ -31,6 +31,8 @@
         els.year = document.getElementById("year");
         els.sectionNav = document.getElementById("section-nav");
         els.feedContext = document.getElementById("feed-context");
+        els.trackSection = document.getElementById("track-of-day");
+        els.trackPlayer = document.getElementById("track-player");
         heroTpl = document.getElementById("hero-template");
         cardTpl = document.getElementById("card-template");
     }
@@ -269,6 +271,26 @@
         els.feedContext.hidden = false;
     }
 
+    // Загружаем «Трек дня» и встраиваем iframe-плеер Яндекс Музыки.
+    function renderTrack() {
+        if (!els.trackSection) return;
+        return MediaAPI.getTrack()
+            .then(function (track) {
+                if (!track || !track.embed_url) {
+                    els.trackSection.hidden = true;
+                    return;
+                }
+                // iframe с плеером; allow — для воспроизведения
+                els.trackPlayer.innerHTML =
+                    '<iframe src="' + escapeHtml(track.embed_url) + '" ' +
+                    'allow="autoplay; fullscreen" ' +
+                    'loading="lazy" ' +
+                    'title="Трек дня — Яндекс Музыка"></iframe>';
+                els.trackSection.hidden = false;
+            })
+            .catch(function () { /* трек не критичен — скрываем блок */ });
+    }
+
     /* ---------- loading ---------- */
 
     function loadNext() {
@@ -385,6 +407,8 @@
         if (els.ticker) els.ticker.textContent = todayLabel();
         if (!els.feed) return;
         bindEvents();
+        // «Трек дня» — независимая загрузка, не блокирует ленту
+        renderTrack();
         // section nav populates the slug->title map; context + feed use it.
         // Even if the sections request fails, still render the feed.
         renderSectionNav()

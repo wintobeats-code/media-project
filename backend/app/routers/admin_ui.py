@@ -35,12 +35,22 @@ async def admin_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
     author_service = AuthorService(db)
     articles_count = await article_service.count_all()
     authors = await author_service.list_authors(limit=1000)
+    # Текущий «Трек дня» для формы
+    from sqlalchemy import select
+
+    from app.models.site_setting import SiteSetting
+
+    track_row = await db.execute(
+        select(SiteSetting).where(SiteSetting.key == "track_of_day_url")
+    )
+    track_setting = track_row.scalars().first()
     return templates.TemplateResponse(
         "admin/dashboard.html",
         {
             "request": request,
             "articles_count": articles_count,
             "authors_count": len(authors),
+            "track_url": track_setting.value if track_setting else "",
         },
     )
 

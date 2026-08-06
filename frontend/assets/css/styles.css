@@ -668,3 +668,53 @@ button { font: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- Трек дня ---------- */
+.track-of-day {
+    margin: 28px 0 36px;
+    padding: 24px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+}
+.track-title {
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+}
+.track-card {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+.track-cover {
+    flex: 0 0 120px;
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+}
+.track-player {
+    flex: 1;
+    min-width: 280px;
+}
+.track-player iframe {
+    width: 100%;
+    height: 120px;
+    border: 0;
+    border-radius: var(--radius);
+}
+@media (max-width: 560px) {
+    .track-cover { flex-basis: 80px; width: 80px; height: 80px; }
+    .track-player { min-width: 100%; }
+}

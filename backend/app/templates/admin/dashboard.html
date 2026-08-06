@@ -20,6 +20,57 @@
 
 <div style="margin-top:2rem;">
     <a href="/admin/articles/new" role="button">+ Новая статья</a>
-    <a href="/admin/authors/new" role="button" class="secondary">👤 Новый автор</a>
+    <a href="/admin/authors/new" role="button" class="secondary">Новый автор</a>
 </div>
+
+<hr style="margin: 2.5rem 0;">
+
+<h2>Трек дня</h2>
+<p style="color: var(--pico-muted-color); font-size: 0.9rem;">
+    Вставьте ссылку на трек Яндекс Музыки (например
+    <code>https://music.yandex.ru/album/12345/track/67890</code>) — он появится на главной странице сайта.
+</p>
+<form onsubmit="saveTrack(event)">
+    <label>
+        Ссылка на трек
+        <input type="url" name="track_url" id="track-url"
+               value="{{ track_url or '' }}"
+               placeholder="https://music.yandex.ru/album/...">
+    </label>
+    <div style="display:flex; gap:1rem; align-items:center; margin-top:1rem;">
+        <button type="submit">Сохранить</button>
+        <span id="track-status" style="font-size: 0.85rem; color: var(--pico-muted-color);"></span>
+    </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+    async function saveTrack(event) {
+        event.preventDefault();
+        const input = document.getElementById('track-url');
+        const status = document.getElementById('track-status');
+        const token = getCookie('access_token');
+        status.textContent = 'Сохранение…';
+        try {
+            const resp = await fetch('/api/settings/track', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify({ url: input.value }),
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                status.style.color = 'var(--pico-primary)';
+                status.textContent = data.embed_url
+                    ? 'Сохранено — трек появится на главной.'
+                    : 'Сохранено, но ссылка не распознана. Проверьте формат.';
+            } else {
+                status.style.color = '#c0392b';
+                status.textContent = 'Ошибка сохранения.';
+            }
+        } catch (e) {
+            status.style.color = '#c0392b';
+            status.textContent = 'Ошибка сети.';
+        }
+    }
+</script>
 {% endblock %}
