@@ -77,12 +77,22 @@
 
     function setCover(mediaEl, url) {
         var img = mediaEl.querySelector("img");
+        // Сброс предыдущего состояния
+        mediaEl.classList.remove("cover-broken");
+        img.onerror = null;
         if (url) {
+            // Если картинка не загрузится (битая ссылка, HTML вместо图片 и т.п.) —
+            // показываем аккуратный плейсхолдер вместо битого img.
+            img.onerror = function () {
+                img.style.visibility = "hidden";
+                mediaEl.classList.add("cover-broken");
+            };
             img.src = url;
             img.alt = "";
+            img.style.visibility = "";
             mediaEl.style.display = "";
         } else {
-            // no cover: collapse the media block to a subtle placeholder
+            // нет обложки — сворачиваем медиа-блок
             mediaEl.style.display = "none";
         }
     }
