@@ -24,6 +24,7 @@ VOTER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 год
 
 
 def _to_list_item(a: Article) -> ArticleListItem:
+    from app.schemas.article import _reading_time
     return ArticleListItem(
         id=a.id,
         title=a.title,
@@ -35,6 +36,7 @@ def _to_list_item(a: Article) -> ArticleListItem:
         section=a.section,
         tag_slugs=[t.slug for t in (a.tags or [])],
         likes_count=getattr(a, "likes_count", 0) or 0,
+        reading_time_minutes=_reading_time(a.body or ""),
         published_at=a.published_at,
         cover_image_url=a.cover_image_url,
         created_at=a.created_at,

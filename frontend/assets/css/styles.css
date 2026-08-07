@@ -492,6 +492,16 @@ button { font: inherit; cursor: pointer; }
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
+/* Время чтения рядом с датой */
+.reading-time {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.reading-time::before { content: "·"; margin: 0 6px; color: var(--text-muted); opacity: 0.6; }
 
 /* Section badge: акцентная капитель над заголовком карточки */
 .section-badge {
@@ -543,6 +553,17 @@ button { font: inherit; cursor: pointer; }
     border: 1px solid var(--border);
 }
 .author-name { font-size: 0.85rem; color: var(--text-soft); }
+.fav-remove {
+    margin-left: auto;
+    background: none;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 2px 4px;
+}
+.fav-remove:hover { color: var(--accent); }
 
 .avatar-placeholder {
     width: 28px; height: 28px; border-radius: 50%;
@@ -728,9 +749,37 @@ button { font: inherit; cursor: pointer; }
 .tag-chip::before { content: "#"; opacity: 0.6; margin-right: 2px; }
 
 /* ---------- Кнопка лайка ---------- */
-.article-like { margin: 28px 0 0; }
-.like-btn {
+/* ---------- Действия на статье (лайк, избранное, поделиться) ---------- */
+.article-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 28px 0 0;
+}
+.action-btn {
     display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    color: var(--text-soft);
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.action-btn:hover { border-color: var(--text); color: var(--text); }
+.action-btn:active { transform: scale(0.96); }
+.action-label { line-height: 1; }
+.share-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-btn { font-size: 0.78rem; padding: 6px 12px; }
+
+/* Лайк */
+.like-btn {
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
@@ -756,6 +805,14 @@ button { font: inherit; cursor: pointer; }
 }
 .like-btn.liked .like-icon { fill: currentColor; stroke: currentColor; }
 .like-btn.liked .like-count { color: var(--text); }
+
+/* Избранное (звёздочка) */
+.fav-icon { fill: none; stroke: currentColor; stroke-width: 1.7; transition: fill 0.15s ease; }
+.fav-btn.active { border-color: var(--text); color: var(--text); }
+.fav-btn.active .fav-icon { fill: currentColor; }
+
+/* Кнопка "копировать" — feedback */
+.share-btn.copied { color: var(--accent); border-color: var(--accent); }
 
 /* ---------- Gallery (fallback for images without `![n]` markers) ---------- */
 .article-gallery { margin: 44px 0; display: grid; gap: 28px; }

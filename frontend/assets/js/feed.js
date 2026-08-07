@@ -188,6 +188,13 @@
         setCover(node.querySelector(".card-media"), article.cover_image_url);
         node.querySelector(".card-date").textContent =
             formatDate(article.published_at || article.created_at);
+        // Время чтения рядом с датой
+        if (article.reading_time_minutes) {
+            var rt = document.createElement("span");
+            rt.className = "reading-time";
+            rt.textContent = article.reading_time_minutes + " мин";
+            node.querySelector(".card-date").parentNode.appendChild(rt);
+        }
         var cardTitle = node.querySelector(".card-title");
         if (article.section) {
             var badge = document.createElement("span");

@@ -21,6 +21,8 @@
         els.tags = document.getElementById("article-tags");
         els.likeBtn = document.getElementById("like-btn");
         els.likeCount = document.getElementById("like-count");
+        els.favBtn = document.getElementById("fav-btn");
+        els.shareGroup = document.getElementById("share-group");
         els.gallery = document.getElementById("article-images");
         els.footnotes = document.getElementById("article-footnotes");
         els.fnList = document.getElementById("footnotes-list");
@@ -295,8 +297,17 @@
         setMeta('meta[name="description"]', "content", description);
         setMeta('#og-title', "content", article.title + " — БОГЕМА");
         setMeta('#og-description', "content", description);
+        var articleUrl = window.location.origin + "/article.html?slug=" + encodeURIComponent(article.slug);
+        setMeta('#og-url', "content", articleUrl);
+        setMeta('#canonical', "href", articleUrl);
         if (article.cover_image_url) {
-            setMeta('meta[property="og:image"]', "content", article.cover_image_url);
+            // Мессенджерам нужен абсолютный URL картинки
+            try {
+                var absImg = new URL(article.cover_image_url, window.location.origin).href;
+                setMeta('meta[property="og:image"]', "content", absImg);
+            } catch (e) {
+                setMeta('meta[property="og:image"]', "content", article.cover_image_url);
+            }
         }
 
         // Section badge (resolved to a title via sectionMap).
@@ -310,6 +321,12 @@
         }
 
         els.date.textContent = formatDate(article.published_at || article.created_at);
+        // Время чтения рядом с датой
+        var rt = article.reading_time_minutes || 1;
+        var rtSpan = document.createElement("span");
+        rtSpan.className = "reading-time";
+        rtSpan.textContent = rt + " мин";
+        els.date.parentNode.appendChild(rtSpan);
         els.title.textContent = article.title;
 
         if (article.subtitle) {
@@ -341,6 +358,8 @@
         renderGallery(article.images, usedPositions);
         renderTags(article.tags);
         renderLike(article);
+        renderFavorite(article);
+        initShare();
 
         els.loading.hidden = true;
         els.content.hidden = false;
@@ -394,6 +413,79 @@
             })
             .catch(function () { /* молча — можно показать toast */ })
             .then(function () { btn.disabled = false; });
+    }
+
+    /* ---------- Избранное (localStorage, без аккаунтов) ---------- */
+    var FAV_KEY = "media-favorites";
+
+    function getFavorites() {
+        try { return JSON.parse(localStorage.getItem(FAV_KEY) || "{}"); }
+        catch (e) { return {}; }
+    }
+    function saveFavorites(data) {
+        try { localStorage.setItem(FAV_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+    // Сохраняем минимальные данные статьи для отображения на /favorites.html
+    function setFavorite(article, fav) {
+        var data = getFavorites();
+        if (fav) {
+            data[article.slug] = {
+                title: article.title,
+                subtitle: article.subtitle || "",
+                slug: article.slug,
+                cover_image_url: article.cover_image_url || "",
+                author_name: (article.author && article.author.name) || article.author_name || "",
+                published_at: article.published_at || "",
+            };
+        } else {
+            delete data[article.slug];
+        }
+        saveFavorites(data);
+    }
+
+    function renderFavorite(article) {
+        if (!els.favBtn) return;
+        var active = !!getFavorites()[article.slug];
+        els.favBtn.classList.toggle("active", active);
+        els.favBtn.hidden = false;
+        if (!els.favBtn.dataset.bound) {
+            els.favBtn.dataset.bound = "1";
+            els.favBtn.addEventListener("click", function () {
+                var nowActive = !els.favBtn.classList.contains("active");
+                els.favBtn.classList.toggle("active", nowActive);
+                setFavorite(article, nowActive);
+            });
+        }
+    }
+
+    /* ---------- Поделиться ---------- */
+    function initShare() {
+        if (!els.shareGroup) return;
+        els.shareGroup.hidden = false;
+        var url = window.location.href;
+        var title = document.title;
+        els.shareGroup.querySelectorAll("[data-share]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var type = btn.dataset.share;
+                var shareUrl;
+                if (type === "telegram") {
+                    shareUrl = "https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(title);
+                    window.open(shareUrl, "_blank", "noopener");
+                } else if (type === "vk") {
+                    shareUrl = "https://vk.com/share.php?url=" + encodeURIComponent(url) + "&title=" + encodeURIComponent(title);
+                    window.open(shareUrl, "_blank", "noopener");
+                } else if (type === "copy") {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(url).then(function () {
+                            btn.classList.add("copied");
+                            var orig = btn.textContent;
+                            btn.textContent = "Скопировано";
+                            setTimeout(function () { btn.classList.remove("copied"); btn.textContent = orig; }, 1500);
+                        });
+                    }
+                }
+            });
+        });
     }
 
     function renderTags(tags) {

@@ -3,7 +3,15 @@ from typing import List, Literal, Optional
 
 from app.core.sections import SECTION_SLUGS
 from app.schemas.author import AuthorRead
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, computed_field, field_validator
+
+
+def _reading_time(body: str) -> int:
+    """Примерное время чтения в минутах (~200 слов/мин, минимум 1)."""
+    if not body:
+        return 1
+    words = len(body.split())
+    return max(1, round(words / 200))
 
 
 # Допустимые значения статуса статьи
@@ -119,6 +127,11 @@ class ArticleRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    @computed_field
+    @property
+    def reading_time_minutes(self) -> int:
+        return _reading_time(self.body)
+
 
 class ArticleListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -133,6 +146,7 @@ class ArticleListItem(BaseModel):
     section: Optional[str] = None
     tag_slugs: List[str] = []
     likes_count: int = 0
+    reading_time_minutes: int = 0
     published_at: Optional[datetime] = None
     cover_image_url: Optional[str] = None
     created_at: datetime

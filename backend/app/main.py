@@ -14,6 +14,7 @@ from app.routers import (
     admin_images,
     admin_ui,
     articles,
+    rss,
     settings as settings_router,
 )
 
@@ -77,6 +78,7 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 app.include_router(articles.router)
 app.include_router(articles.meta_router)
 app.include_router(settings_router.router)
+app.include_router(rss.router)
 
 # API админки
 app.include_router(admin_auth.router)
