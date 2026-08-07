@@ -47,11 +47,12 @@ async def list_articles(
     per_page: int = Query(20, ge=1, le=100),
     section: str | None = Query(None, description="Filter by section slug"),
     tag: str | None = Query(None, description="Filter by tag slug"),
+    sort: str = Query("new", description="Сортировка: new | old | popular"),
     db: AsyncSession = Depends(get_db),
 ):
     service = ArticleService(db)
     articles = await service.list_published(
-        page=page, per_page=per_page, section=section, tag=tag
+        page=page, per_page=per_page, section=section, tag=tag, sort=sort
     )
     return [_to_list_item(a) for a in articles]
 

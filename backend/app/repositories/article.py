@@ -18,18 +18,23 @@ class ArticleRepository(BaseRepository[Article]):
         limit: int = 20,
         section: Optional[str] = None,
         tag: Optional[str] = None,
+        sort: str = "new",
     ) -> List[Article]:
-        query = (
-            select(Article)
-            .where(Article.status == "published")
-            .order_by(Article.published_at.desc())
-            .offset(offset)
-            .limit(limit)
-        )
+        query = select(Article).where(Article.status == "published")
         if section:
             query = query.where(Article.section == section)
         if tag:
             query = query.join(Article.tags).where(Tag.slug == tag)
+
+        # Сортировка: popular — по количеству лайков, old — старые, new — новые.
+        if sort == "popular":
+            query = query.order_by(Article.likes_count.desc().nullslast(), Article.published_at.desc())
+        elif sort == "old":
+            query = query.order_by(Article.published_at.asc())
+        else:  # "new" (по умолчанию)
+            query = query.order_by(Article.published_at.desc())
+
+        query = query.offset(offset).limit(limit)
         result = await self.session.execute(query)
         return list(result.scalars().unique().all())
 

@@ -37,10 +37,11 @@ class ArticleService:
         per_page: int = 20,
         section: Optional[str] = None,
         tag: Optional[str] = None,
+        sort: str = "new",
     ) -> List[Article]:
         offset = (page - 1) * per_page
         return await self.repo.get_published(
-            offset=offset, limit=per_page, section=section, tag=tag
+            offset=offset, limit=per_page, section=section, tag=tag, sort=sort
         )
 
     async def count_published(

@@ -232,16 +232,18 @@
             card.style.display = match ? "" : "none";
         });
 
-        // sort (only reorders DOM nodes)
-        cards.sort(function (a, b) {
-            var da = new Date(a.dataset.date).getTime() || 0;
-            var db = new Date(b.dataset.date).getTime() || 0;
-            return state.sort === "old" ? da - db : db - da;
-        });
-        var frag = document.createDocumentFragment();
-        cards.forEach(function (c) { frag.appendChild(c); });
-        els.feed.innerHTML = "";
-        els.feed.appendChild(frag);
+        // Клиентская сортировка только для new/old; «popular» сортируется на сервере.
+        if (state.sort !== "popular") {
+            cards.sort(function (a, b) {
+                var da = new Date(a.dataset.date).getTime() || 0;
+                var db = new Date(b.dataset.date).getTime() || 0;
+                return state.sort === "old" ? da - db : db - da;
+            });
+            var frag = document.createDocumentFragment();
+            cards.forEach(function (c) { frag.appendChild(c); });
+            els.feed.innerHTML = "";
+            els.feed.appendChild(frag);
+        }
     }
 
     function updateEmptyState() {
@@ -344,6 +346,17 @@
 
     /* ---------- loading ---------- */
 
+    // Полная перезагрузка ленты с сервера (при смене сортировки, например на «по популярности»).
+    function reloadFeed() {
+        state.items = [];
+        state.hero = null;
+        state.page = 1;
+        state.hasMore = true;
+        els.hero.innerHTML = "";
+        els.feed.innerHTML = "";
+        loadNext();
+    }
+
     function loadNext() {
         if (state.loading || !state.hasMore) return Promise.resolve();
         state.loading = true;
@@ -353,6 +366,7 @@
         return MediaAPI.listArticles(state.page, PER_PAGE, {
             section: state.section || null,
             tag: state.tag || null,
+            sort: state.sort || null,
         })
             .then(function (batch) {
                 state.loading = false;
@@ -564,11 +578,18 @@
             items: [
                 { value: "new", label: "Сначала новые" },
                 { value: "old", label: "Сначала старые" },
+                { value: "popular", label: "По популярности" },
             ],
             value: state.sort,
             onChange: function (val) {
                 state.sort = val;
-                applyFilterAndSort();
+                // Сортировка меняется на сервере — перезагружаем ленту с начала.
+                if (val === "popular") {
+                    reloadFeed();
+                } else {
+                    // new/old можно применять клиентски к уже загруженным.
+                    applyFilterAndSort();
+                }
             },
         });
 

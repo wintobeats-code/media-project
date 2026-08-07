@@ -8,7 +8,7 @@
      * Fetch a page of published articles.
      * @param {number} page
      * @param {number} perPage
-     * @param {object} [filters] - { section: slug, tag: slug }
+     * @param {object} [filters] - { section: slug, tag: slug, sort: "new|old|popular" }
      * @returns {Promise<Array>}
      */
     API.listArticles = function (page, perPage, filters) {
@@ -17,6 +17,7 @@
                  "&per_page=" + encodeURIComponent(perPage || 12);
         if (filters.section) qs += "&section=" + encodeURIComponent(filters.section);
         if (filters.tag) qs += "&tag=" + encodeURIComponent(filters.tag);
+        if (filters.sort) qs += "&sort=" + encodeURIComponent(filters.sort);
         return fetch("/api/articles" + qs)
             .then(function (r) {
                 if (!r.ok) throw new Error("HTTP " + r.status);
