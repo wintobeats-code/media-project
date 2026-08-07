@@ -583,13 +583,9 @@
             value: state.sort,
             onChange: function (val) {
                 state.sort = val;
-                // Сортировка меняется на сервере — перезагружаем ленту с начала.
-                if (val === "popular") {
-                    reloadFeed();
-                } else {
-                    // new/old можно применять клиентски к уже загруженным.
-                    applyFilterAndSort();
-                }
+                // Любая смена сортировки — перезагружаем ленту с сервера,
+                // т.к. порядок (и hero) должны вычисляться на сервере.
+                reloadFeed();
             },
         });
 
