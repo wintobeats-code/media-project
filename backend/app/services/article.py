@@ -44,13 +44,6 @@ class ArticleService:
             offset=offset, limit=per_page, section=section, tag=tag, sort=sort
         )
 
-    async def count_published(
-        self,
-        section: Optional[str] = None,
-        tag: Optional[str] = None,
-    ) -> int:
-        return await self.repo.count_published(section=section, tag=tag)
-
     async def get_by_slug(self, slug: str) -> Optional[Article]:
         return await self.repo.get_by_slug_published(slug)
 

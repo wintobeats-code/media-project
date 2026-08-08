@@ -7,7 +7,7 @@ from app.core.database import Base
 class SiteSetting(Base):
     """Глобальные настройки сайта (key-value).
 
-    Сейчас используется для хранения «Трека дня» (ключ track_of_day_url).
+    Сейчас используется для хранения «Трека дня» (ключ track_of_day).
     Таблица создастся автоматически через create_all при старте.
     """
 

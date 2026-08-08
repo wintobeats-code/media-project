@@ -13,7 +13,7 @@ from app.core.sections import SECTIONS
 from app.models.article import Article
 from app.models.article_like import ArticleLike
 from app.models.tag import Tag
-from app.schemas.article import ArticleListItem, ArticleRead
+from app.schemas.article import ArticleListItem, ArticleRead, article_to_list_item
 from app.schemas.meta import SectionCount, TagCount
 from app.services.article import ArticleService
 
@@ -21,26 +21,6 @@ router = APIRouter(prefix="/api/articles", tags=["articles"])
 
 VOTER_COOKIE = "voter_id"
 VOTER_COOKIE_MAX_AGE = 60 * 60 * 24 * 365  # 1 год
-
-
-def _to_list_item(a: Article) -> ArticleListItem:
-    from app.schemas.article import _reading_time
-    return ArticleListItem(
-        id=a.id,
-        title=a.title,
-        slug=a.slug,
-        subtitle=a.subtitle,
-        author_name=a.author.name if a.author else "",
-        author_slug=a.author.slug if a.author else "",
-        status=a.status,
-        section=a.section,
-        tag_slugs=[t.slug for t in (a.tags or [])],
-        likes_count=getattr(a, "likes_count", 0) or 0,
-        reading_time_minutes=_reading_time(a.body or ""),
-        published_at=a.published_at,
-        cover_image_url=a.cover_image_url,
-        created_at=a.created_at,
-    )
 
 
 @router.get("", response_model=List[ArticleListItem])
@@ -56,7 +36,7 @@ async def list_articles(
     articles = await service.list_published(
         page=page, per_page=per_page, section=section, tag=tag, sort=sort
     )
-    return [_to_list_item(a) for a in articles]
+    return [article_to_list_item(a) for a in articles]
 
 
 @router.get("/{slug}", response_model=ArticleRead)
@@ -114,10 +94,13 @@ async def like_article(
         except IntegrityError:
             # Гонка: лайк уже создан параллельным запросом — считаем уже поставленным
             await db.rollback()
-        # Пересчитываем количество лайков
-        await db.refresh(article)
 
-    likes_count = getattr(article, "likes_count", 0) or 0
+    # Вычисляем актуальное количество лайков явным COUNT-запросом
+    # (column_property likes_count ненадёжно перевычисляется в той же сессии).
+    count_result = await db.execute(
+        select(func.count(ArticleLike.id)).where(ArticleLike.article_id == article.id)
+    )
+    likes_count = int(count_result.scalar() or 0)
     return {
         "likes_count": likes_count,
         "liked": True,
@@ -130,7 +113,7 @@ async def related_articles(slug: str, db: AsyncSession = Depends(get_db)):
     """Свежие опубликованные статьи, кроме текущей (для блока «Читайте по теме»)."""
     service = ArticleService(db)
     articles = await service.list_related(slug, limit=3)
-    return [_to_list_item(a) for a in articles]
+    return [article_to_list_item(a) for a in articles]
 
 
 # --- Meta endpoints (sections + tags) ---

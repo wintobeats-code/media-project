@@ -12,6 +12,7 @@ from app.schemas.article import (
     ArticleListItem,
     ArticleRead,
     ArticleUpdate,
+    article_to_list_item,
 )
 from app.services.article import ArticleService
 
@@ -27,25 +28,7 @@ async def list_articles(
 ):
     service = ArticleService(db)
     articles = await service.list_all_admin(page=page, per_page=per_page)
-    result = []
-    for a in articles:
-        result.append(
-            ArticleListItem(
-                id=a.id,
-                title=a.title,
-                slug=a.slug,
-                subtitle=a.subtitle,
-                author_name=a.author.name if a.author else "",
-                author_slug=a.author.slug if a.author else "",
-                status=a.status,
-                section=a.section,
-                tag_slugs=[t.slug for t in (a.tags or [])],
-                published_at=a.published_at,
-                cover_image_url=a.cover_image_url,
-                created_at=a.created_at,
-            )
-        )
-    return result
+    return [article_to_list_item(a) for a in articles]
 
 
 @router.post("", response_model=ArticleRead, status_code=201)

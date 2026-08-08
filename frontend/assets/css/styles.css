@@ -247,7 +247,6 @@ button { font: inherit; cursor: pointer; }
 .dropdown-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .dropdown-value { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dropdown-arrow { flex-shrink: 0; transition: transform 0.18s ease; color: var(--text-muted); }
-.dropdown[aria-expanded="true"] .dropdown-arrow,
 .dropdown-btn[aria-expanded="true"] .dropdown-arrow { transform: rotate(180deg); }
 
 .dropdown-menu {

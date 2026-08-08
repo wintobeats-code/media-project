@@ -84,7 +84,7 @@
         mediaEl.classList.remove("cover-broken");
         img.onerror = null;
         if (url) {
-            // Если картинка не загрузится (битая ссылка, HTML вместо图片 и т.п.) —
+            // Если картинка не загрузится (битая ссылка, HTML вместо изображения и т.п.) —
             // показываем аккуратный плейсхолдер вместо битого img.
             img.onerror = function () {
                 img.style.visibility = "hidden";
@@ -135,14 +135,14 @@
 
         // Превью текста статьи: догружаем body по slug и показываем начало
         // с fade-out + «Читать далее». Сохраняем slug, чтобы при гонке запросов
-        // не подставить чужой текст.
+        // не подставить чужой текст (узел мог быть заменён другим hero).
+        node.dataset.slug = article.slug;
         var excerptEl = node.querySelector(".hero-card-excerpt");
         var currentSlug = article.slug;
         MediaAPI.getArticle(currentSlug).then(function (full) {
-            if (!full || !full.body || node.dataset.slug !== currentSlug && node.dataset.slug) {
-                // узел мог быть заменён другим hero — проверка не строгая, оставляем
-            }
-            var text = stripMarkdown(full ? full.body : "");
+            if (!full || !full.body) return;
+            if (node.dataset.slug !== currentSlug) return; // hero уже заменён
+            var text = stripMarkdown(full.body);
             if (text) {
                 excerptEl.innerHTML = "";
                 var p = document.createElement("p");
@@ -564,7 +564,6 @@
 
     // Ссылки на инициализированные dropdown'ы
     var authorDD = null;
-    var sortDD = null;
 
     function bindEvents() {
         els.loadMore.addEventListener("click", loadNext);
@@ -581,7 +580,7 @@
         });
 
         // Кастомный dropdown «Сортировка»
-        sortDD = createDropdown(els.sortDropdown, {
+        createDropdown(els.sortDropdown, {
             items: [
                 { value: "new", label: "Сначала новые" },
                 { value: "old", label: "Сначала старые" },

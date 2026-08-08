@@ -150,3 +150,24 @@ class ArticleListItem(BaseModel):
     published_at: Optional[datetime] = None
     cover_image_url: Optional[str] = None
     created_at: datetime
+
+
+def article_to_list_item(a) -> ArticleListItem:
+    """Собирает ArticleListItem из ORM-объекта Article.
+    Используется и публичным, и админ-роутером (единое поведение)."""
+    return ArticleListItem(
+        id=a.id,
+        title=a.title,
+        slug=a.slug,
+        subtitle=a.subtitle,
+        author_name=a.author.name if a.author else "",
+        author_slug=a.author.slug if a.author else "",
+        status=a.status,
+        section=a.section,
+        tag_slugs=[t.slug for t in (a.tags or [])],
+        likes_count=getattr(a, "likes_count", 0) or 0,
+        reading_time_minutes=_reading_time(a.body or ""),
+        published_at=a.published_at,
+        cover_image_url=a.cover_image_url,
+        created_at=a.created_at,
+    )

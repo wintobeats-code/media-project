@@ -58,20 +58,6 @@ class ArticleRepository(BaseRepository[Article]):
         result = await self.session.execute(query)
         return list(result.scalars().unique().all())
 
-    async def count_published(
-        self,
-        *,
-        section: Optional[str] = None,
-        tag: Optional[str] = None,
-    ) -> int:
-        query = select(func.count(Article.id)).where(Article.status == "published")
-        if section:
-            query = query.where(Article.section == section)
-        if tag:
-            query = query.join(Article.tags).where(Tag.slug == tag)
-        result = await self.session.execute(query)
-        return int(result.scalar() or 0)
-
     async def get_all_admin(self, *, offset: int = 0, limit: int = 20) -> List[Article]:
         query = (
             select(Article)
@@ -84,14 +70,4 @@ class ArticleRepository(BaseRepository[Article]):
 
     async def count_all(self) -> int:
         return await self.count()
-
-    async def section_counts(self) -> dict:
-        """Возвращает {slug_раздела: количество_опубликованных} для всех разделов."""
-        query = (
-            select(Article.section, func.count(Article.id))
-            .where(Article.status == "published", Article.section.is_not(None))
-            .group_by(Article.section)
-        )
-        result = await self.session.execute(query)
-        return {slug: int(cnt) for slug, cnt in result.all() if slug}
 

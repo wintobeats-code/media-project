@@ -304,9 +304,9 @@
             // Мессенджерам нужен абсолютный URL картинки
             try {
                 var absImg = new URL(article.cover_image_url, window.location.origin).href;
-                setMeta('meta[property="og:image"]', "content", absImg);
+                setMeta('#og-image', "content", absImg);
             } catch (e) {
-                setMeta('meta[property="og:image"]', "content", article.cover_image_url);
+                setMeta('#og-image', "content", article.cover_image_url);
             }
         }
 
@@ -461,6 +461,8 @@
     /* ---------- Поделиться ---------- */
     function initShare() {
         if (!els.shareGroup) return;
+        if (els.shareGroup.dataset.bound) return; // обработчики вешаются один раз
+        els.shareGroup.dataset.bound = "1";
         els.shareGroup.hidden = false;
         var url = window.location.href;
         var title = document.title;
