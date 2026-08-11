@@ -32,6 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install ruff
 
       - name: Compile all Python files (синтаксис)
@@ -47,10 +48,14 @@ jobs:
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
           SECRET_KEY: "ci-test-secret-not-for-production"
         run: |
-          # aiosqlite нужен для проверки импорта с SQLite in-memory
-          pip install aiosqlite
           python -c "from app.main import app; print('FastAPI app импортирован:', app.title)"
           python -c "from app.models import Article, Author, Tag, Footnote, ArticleImage; print('Все модели импортируются')"
+
+      - name: Запуск автотестов (pytest)
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          SECRET_KEY: "ci-test-secret-not-for-production"
+        run: pytest tests/ -v
 
   frontend:
     name: Frontend (HTML/CSS/JS)
