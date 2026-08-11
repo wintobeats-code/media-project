@@ -30,11 +30,11 @@ class ImageService:
         if ext not in ImageService.ALLOWED_EXTENSIONS:
             raise ValueError(f"Расширение {ext} не разрешено")
 
-        # Проверяем content-type (защита от маскировки скриптов под картинки)
+        # Проверяем content-type строго (защита от маскировки скриптов под картинки)
         allowed_ct = ImageService.ALLOWED_CONTENT_TYPES.get(ext, set())
-        if file.content_type and file.content_type not in allowed_ct:
+        if not file.content_type or file.content_type not in allowed_ct:
             raise ValueError(
-                f"Тип содержимого {file.content_type} не соответствует расширению {ext}"
+                f"Тип содержимого {file.content_type or 'не указан'} не соответствует расширению {ext}"
             )
 
         # Читаем файл порциями с проверкой размера (защита от слишком больших файлов)

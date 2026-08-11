@@ -13,7 +13,7 @@
     --bg-elevated: #ffffff;
     --text: #111111;
     --text-soft: #4d4d52;
-    --text-muted: #8a8a90;
+    --text-muted: #6b6b73;
     --border: #e6e6e8;
     --border-strong: #d2d2d6;
     --accent: #111111;            /* чёрный акцент */
@@ -43,7 +43,7 @@
     --bg-elevated: #1c1c1f;
     --text: #ececec;
     --text-soft: #a8a8ad;
-    --text-muted: #74747a;
+    --text-muted: #9a9aa0;
     --border: #262629;
     --border-strong: #34343a;
     --accent: #ffffff;            /* белый акцент на чёрном */
@@ -131,7 +131,17 @@ button { font: inherit; cursor: pointer; }
 }
 .section-nav a:hover { color: var(--accent); background: var(--accent-soft); }
 .section-nav a.active { color: var(--bg-elevated); background: var(--accent); }
-@media (max-width: 720px) { .section-nav { display: none; } }
+/* На мобильных — горизонтальный скролл разделов вместо скрытия */
+@media (max-width: 720px) {
+    .section-nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .section-nav::-webkit-scrollbar { display: none; }
+    .section-nav a { flex-shrink: 0; }
+}
 
 /* Логотип: массивный display-гротеск, верхний регистр, с трекингом — дух ЧТИВО */
 .brand {

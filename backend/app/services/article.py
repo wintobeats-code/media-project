@@ -86,24 +86,31 @@ class ArticleService:
         return tags
 
     async def _create_tag_safely(self, name: str, slug: str) -> Tag:
-        """Создаёт тег в отдельном savepoint; при конфликте slug — перевыбор."""
+        """Создаёт тег в отдельном savepoint; при конфликте slug — перевыбор.
+
+        Использует begin_nested() — это SAVEPOINT в БД, который откатывает
+        только INSERT тега, не трогая остальную транзакцию (например, саму
+        статью, созданную до вызова этого метода).
+        """
         from sqlalchemy.exc import IntegrityError
 
         try:
-            tag = Tag(name=name, slug=slug)
-            self.session.add(tag)
-            await self.session.flush()
-            return tag
+            async with self.session.begin_nested():
+                tag = Tag(name=name, slug=slug)
+                self.session.add(tag)
+                await self.session.flush()
+                return tag
         except IntegrityError:
-            await self.session.rollback()
-            result = await self.session.execute(
-                select(Tag).where(Tag.slug == slug)
-            )
-            tag = result.scalars().first()
-            if tag is None:
-                # крайне маловероятно, но всё же — пробросим осмысленную ошибку
-                raise
-            return tag
+            pass
+
+        # Конфликт slug — перевыбираем существующий тег
+        result = await self.session.execute(
+            select(Tag).where(Tag.slug == slug)
+        )
+        tag = result.scalars().first()
+        if tag is None:
+            raise RuntimeError(f"Тег со slug={slug} не найден после конфликта")
+        return tag
 
     async def create_article(self, data: ArticleCreate) -> Article:
         article_data = {

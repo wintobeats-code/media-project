@@ -40,12 +40,19 @@ async def lifespan(app: FastAPI):
     # Гарантируем существование папки для загруженных файлов
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Предупреждение о небезопасном секретном ключе (используется дефолтный)
+    # Защита: в продакшене слабый SECRET_KEY блокирует запуск.
+    # В dev — предупреждение в логах.
+    import os
     if settings.SECRET_KEY.startswith("change-me"):
+        if os.environ.get("ENV") == "production":
+            raise RuntimeError(
+                "SECRET_KEY содержит значение по умолчанию. "
+                "Задайте надёжный ключ в переменной окружения SECRET_KEY."
+            )
         import logging
         logging.getLogger("app.main").warning(
             "ВНИМАНИЕ: SECRET_KEY содержит значение по умолчанию. "
-            "Задайте надёжный ключ в .env перед использованием в продакшене."
+            "Задайте надёжный ключ перед публикацией."
         )
 
     yield

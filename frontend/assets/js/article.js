@@ -171,25 +171,31 @@
             p.replaceWith(figure);
         });
 
-        // Replace standalone "*" markers with footnote references.
-        // Operate on text nodes to avoid touching tags/attributes.
+        // Заменяем изолированные маркеры "*" на ссылки-сноски.
+        // "*" считается маркером только если он окружён пробелом, началом/концом
+        // строки или знаком препинания — но НЕ внутри слова (например "100*").
+        // Работаем по текстовым нодам, не трогая теги/атрибуты.
         var footnotes = article.footnotes || [];
         var counter = 0;
         var walker = document.createTreeWalker(els.body, NodeFilter.SHOW_TEXT, null);
         var textNodes = [];
         var node;
         while ((node = walker.nextNode())) {
-            // skip inside <code> / <pre>
+            // пропускаем внутри <code> / <pre>
             if (node.parentElement.closest("code, pre")) continue;
             textNodes.push(node);
         }
+        // Regex: * окружён границей слова/пробелом/началом/концом/пунктуацией
+        var starRe = /(?<=^|[\s.,;:!?()])\*(?=$|[\s.,;:!?()])/g;
         textNodes.forEach(function (tn) {
             var text = tn.nodeValue;
-            if (text.indexOf("*") === -1) return;
+            if (!starRe.test(text)) return;
+            starRe.lastIndex = 0;
             var frag = document.createDocumentFragment();
             var last = 0;
-            var i;
-            while ((i = text.indexOf("*", last)) !== -1) {
+            var match;
+            while ((match = starRe.exec(text)) !== null) {
+                var i = match.index;
                 if (i > last) {
                     frag.appendChild(document.createTextNode(text.slice(last, i)));
                 }
