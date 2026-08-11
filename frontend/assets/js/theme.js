@@ -27,9 +27,9 @@
         }
     }
 
-    // Apply ASAP to avoid flash. The <html data-theme="light"> is a fallback
-    // before this script runs (it is loaded without defer in <head> position
-    // at end of body, so DOM is ready).
+    // Применяем тему сразу, чтобы избежать «вспышки» при загрузке.
+    // Инлайн-скрипт в <head> уже задал тему до отрисовки, а здесь
+    // дублируем для надёжности (скрипт грузится в конце body).
     initTheme();
 
     document.addEventListener("DOMContentLoaded", function () {

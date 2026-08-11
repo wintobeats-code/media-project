@@ -224,7 +224,7 @@
     function applyFilterAndSort() {
         var cards = Array.prototype.slice.call(els.feed.children);
 
-        // Hide hero when an author filter is active and it does not match the
+        // Скрываем hero, если активен фильтр по автору и он не совпадает
         // hero's author (hero represents only the freshest article).
         if (state.hero) {
             var heroMatches = !state.authorFilter ||
@@ -257,8 +257,8 @@
         var visibleCards = Array.prototype.some.call(els.feed.children, function (c) {
             return c.style.display !== "none";
         });
-        // Consider the hero too: if the only article became the hero, the grid
-        // is empty but the page is not.
+        // Учитываем и hero: если единственная статья стала hero, сетка
+        // пуста, но страница нет.
         var hasHero = !!state.hero &&
             (!state.authorFilter || state.hero.author_slug === state.authorFilter);
         els.empty.hidden = visibleCards || hasHero;
@@ -291,7 +291,7 @@
         return sectionMap[slug] || slug;
     }
 
-    // Build the top section-nav links (Мода, Музыка…) from /api/sections.
+    // Строим навигацию разделов (Мода, Музыка…) из /api/sections.
     function renderSectionNav() {
         if (!els.sectionNav) return;
         return MediaAPI.listSections().then(function (sections) {
@@ -315,7 +315,7 @@
         }).catch(function () { /* nav is non-critical */ });
     }
 
-    // Show a "Раздел: Мода ✕" / "Тег: ... ✕" line above the feed.
+    // Показываем над лентой строку «Раздел: Мода · все» / «Тег: ... · все».
     function renderFeedContext() {
         if (!els.feedContext) return;
         if (!state.section && !state.tag) { els.feedContext.hidden = true; return; }
@@ -421,7 +421,7 @@
                 applyFilterAndSort();
                 updateEmptyState();
 
-                // If fewer than requested returned, no more pages
+                // Если вернулось меньше запрошенного — страниц больше нет
                 if (batch.length < PER_PAGE) {
                     state.hasMore = false;
                     els.loadMore.hidden = true;
@@ -625,8 +625,8 @@
         loadAllTags();
         // «Трек дня» — независимая загрузка, не блокирует ленту
         renderTrack();
-        // section nav populates the slug->title map; context + feed use it.
-        // Even if the sections request fails, still render the feed.
+        // навигация разделов заполняет карту slug→название; контекст и лента её используют.
+        // Даже если запрос разделов не удался — лента всё равно грузится.
         renderSectionNav()
             .then(renderFeedContext)
             .catch(renderFeedContext)

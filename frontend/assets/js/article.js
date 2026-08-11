@@ -143,7 +143,7 @@
         // javascript:-URL и т.п. запрещены конфигурацией DOMPurify).
         els.body.innerHTML = sanitizeHtml(html);
 
-        // 2) Swap placeholder <p>@@IMG-n@@</p> for real <figure> elements.
+        // 2) Заменяем плейсхолдеры <p>@@IMG-n@@</p> на настоящие <figure>.
         var usedPositions = {};
         Array.prototype.slice.call(els.body.querySelectorAll("p")).forEach(function (p) {
             var txt = (p.textContent || "").trim();
@@ -256,7 +256,7 @@
 
     /* ---------- gallery ---------- */
 
-    // Shows only images that were NOT embedded inline via `![n]` markers.
+    // Показывает только картинки, которые НЕ вставлены в текст через `![n]`.
     function renderGallery(images, usedPositions) {
         usedPositions = usedPositions || {};
         var leftover = (images || []).filter(function (im) {
@@ -316,7 +316,7 @@
             }
         }
 
-        // Section badge (resolved to a title via sectionMap).
+        // Бейдж раздела (преобразуем slug в человекочитаемое название через sectionMap).
         if (article.section && els.section) {
             els.section.dataset.slug = article.section;
             els.section.textContent = sectionTitle(article.section);
